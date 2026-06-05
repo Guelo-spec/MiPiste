@@ -504,6 +504,7 @@ async function idbGet(k){ const db=await idb(); return new Promise((res,rej)=>{ 
 async function idbDel(k){ const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction('videos','readwrite'); tx.objectStore('videos').delete(k); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
 
 function renderFilm(){
+  stopClipLoop();
   const seg=[['videos','🎬 Videos'],['clips','✂️ Clips'],['footage','📹 Footage']];
   const segHtml=seg.map(s=>`<div class="seg ${filmView===s[0]?'on':''}" data-filmview="${s[0]}">${s[1]}</div>`).join('');
   const body = filmView==='clips'?clipsBody() : filmView==='footage'?footageBody() : videosBody();
@@ -598,6 +599,7 @@ function clipsBody(){
     <div class="filmgrid">${cards}</div>`;
 }
 function wireClips(){
+  loadYTApi();
   document.getElementById('clipUrl').oninput=e=>clipDraft.url=e.target.value;
   document.getElementById('clipStart').oninput=e=>clipDraft.start=e.target.value;
   document.getElementById('clipEnd').oninput=e=>clipDraft.end=e.target.value;
@@ -615,11 +617,46 @@ function addClip(){
   state.clips.push({id:uid(), vid, start:s, end:e, label:clipDraft.label.trim(), tag:clipDraft.tag, ts:Date.now()});
   save(); clipDraft={url:'',start:'',end:'',label:'',tag:clipDraft.tag}; renderFilm(); toast('Clip saved ✂️');
 }
+/* YouTube IFrame API — used to LOOP a clip's exact segment */
+let _ytReady=false, _ytLoading=false, _ytWaiters=[];
+function loadYTApi(){
+  if(_ytReady) return Promise.resolve();
+  return new Promise(res=>{
+    _ytWaiters.push(res);
+    if(window.YT && window.YT.Player){ _ytReady=true; _ytWaiters.splice(0).forEach(f=>f()); return; }
+    if(_ytLoading) return;
+    _ytLoading=true;
+    window.onYouTubeIframeAPIReady=function(){ _ytReady=true; _ytWaiters.splice(0).forEach(f=>f()); };
+    const tag=document.createElement('script'); tag.src='https://www.youtube.com/iframe_api'; document.head.appendChild(tag);
+  });
+}
+let _clipPlayer=null, _clipTimer=null;
+function stopClipLoop(){ if(_clipTimer){clearInterval(_clipTimer); _clipTimer=null;} if(_clipPlayer){ try{_clipPlayer.destroy();}catch(e){} _clipPlayer=null; } }
+function createClipPlayer(pid,c){
+  stopClipLoop();
+  _clipPlayer=new YT.Player(pid,{
+    videoId:c.vid, width:'100%', height:'100%',
+    playerVars:{autoplay:1, start:c.start, controls:1, rel:0, modestbranding:1, playsinline:1, fs:1},
+    events:{
+      onReady:e=>{ try{ e.target.seekTo(c.start,true); e.target.playVideo(); }catch(err){} },
+      onStateChange:e=>{ if(e.data===YT.PlayerState.ENDED){ try{ e.target.seekTo(c.start,true); e.target.playVideo(); }catch(err){} } }
+    }
+  });
+  // poll: the instant we hit the end time, jump back to start → seamless segment loop
+  _clipTimer=setInterval(()=>{
+    if(!_clipPlayer || !_clipPlayer.getCurrentTime) return;
+    let t; try{ t=_clipPlayer.getCurrentTime(); }catch(e){ return; }
+    if(typeof t==='number' && t>=c.end){ try{ _clipPlayer.seekTo(c.start,true); _clipPlayer.playVideo(); }catch(e){} }
+  },200);
+}
 function playClip(id){
   const c=state.clips.find(x=>x.id===id); if(!c) return;
   const thumb=document.querySelector('.film[data-cid="'+id+'"] .thumb'); if(!thumb) return;
-  thumb.innerHTML=`<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${c.vid}?autoplay=1&start=${c.start}&end=${c.end}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="border:0"></iframe>`;
+  const pid='ytp_'+id;
+  thumb.innerHTML=`<div id="${pid}" style="width:100%;height:100%"></div>`;
   thumb.classList.add('playing');
+  if(window.YT && window.YT.Player){ createClipPlayer(pid,c); }
+  else { loadYTApi().then(()=>{ if(document.getElementById(pid)) createClipPlayer(pid,c); }); }
 }
 
 /* ---- Footage (your uploaded videos) ---- */
