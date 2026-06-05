@@ -126,6 +126,17 @@
   .tgroup .trow:last-child{border-bottom:none}
   .trow b{font-size:14px}
   .trow span{color:var(--muted);font-size:12.5px;margin-top:2px;line-height:1.4}
+  /* Film tabs */
+  .segctl{display:flex;gap:6px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:5px;margin-bottom:14px}
+  .seg{flex:1;text-align:center;padding:9px 4px;border-radius:9px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
+  .seg.on{background:var(--accent);color:#fff}
+  .timerow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .goldbtn{color:var(--gold)!important}
+  .thumb .range{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.78);color:#fff;font-size:12px;font-weight:700;padding:3px 8px;border-radius:7px}
+  .thumb.foot{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1c1f29,#11131a)}
+  .footicon{font-size:42px;opacity:.5}
+  .labinp{width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 11px;font-size:14px;font-weight:700;font-family:inherit}
+  .chip.mini{padding:6px 12px;font-size:13px}
   /* Film */
   .filmgrid{display:grid;gap:14px}
   .film{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
@@ -251,15 +262,19 @@ function load(){
     return {
       sessions: JSON.parse(localStorage.getItem('piste_sessions')||'[]'),
       plan: Object.assign({}, DEFAULT_PLAN, JSON.parse(localStorage.getItem('piste_plan')||'{}')),
-      films: JSON.parse(localStorage.getItem('piste_films')||'[]')
+      films: JSON.parse(localStorage.getItem('piste_films')||'[]'),
+      clips: JSON.parse(localStorage.getItem('piste_clips')||'[]'),
+      uploads: JSON.parse(localStorage.getItem('piste_uploads')||'[]')
     };
-  }catch(e){ return {sessions:[], plan:Object.assign({},DEFAULT_PLAN), films:[]}; }
+  }catch(e){ return {sessions:[], plan:Object.assign({},DEFAULT_PLAN), films:[], clips:[], uploads:[]}; }
 }
 function save(){
   try{
     localStorage.setItem('piste_sessions', JSON.stringify(state.sessions));
     localStorage.setItem('piste_plan', JSON.stringify(state.plan));
     localStorage.setItem('piste_films', JSON.stringify(state.films));
+    localStorage.setItem('piste_clips', JSON.stringify(state.clips));
+    localStorage.setItem('piste_uploads', JSON.stringify(state.uploads));
   }catch(e){}
 }
 
@@ -468,19 +483,37 @@ function renderProgress(){
   document.getElementById('importFile').onchange=importData;
 }
 
-/* ---------- Film Room ---------- */
+/* ---------- Film Room (Videos · Clips · Footage) ---------- */
 const FILM_TAGS=['Technique','Inspiration','My bouts','Opponent'];
+const FOOT_TAGS=['Mine','Opponent'];
+let filmView='videos';
 let filmFilter='All';
 let filmDraft={url:'',title:'',tag:'Technique'};
-function ytId(url){
-  if(!url) return null;
-  const m=url.trim().match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-  return m?m[1]:null;
-}
-function ytStart(url){ const m=(url||'').match(/[?&](?:t|start)=(\d+)/); return m?+m[1]:0; }
+let clipDraft={url:'',start:'',end:'',label:'',tag:'Technique'};
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function ytId(url){ if(!url) return null; const m=url.trim().match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/); return m?m[1]:null; }
+function parseTime(t){ if(t==null) return null; t=(''+t).trim(); if(t==='') return null; if(/^\d+$/.test(t)) return +t; const p=t.split(':').map(Number); if(p.some(n=>isNaN(n))) return null; return p.reduce((a,b)=>a*60+b,0); }
+function fmtTime(s){ s=Math.max(0,Math.round(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60; const mm=h?String(m).padStart(2,'0'):m; return (h?h+':':'')+mm+':'+String(sec).padStart(2,'0'); }
 function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function escapeAttr(s){return (s||'').replace(/"/g,'&quot;');}
+/* IndexedDB store for uploaded footage blobs */
+let _db=null;
+function idb(){ return new Promise((res,rej)=>{ if(_db) return res(_db); const r=indexedDB.open('piste',1); r.onupgradeneeded=()=>r.result.createObjectStore('videos'); r.onsuccess=()=>{_db=r.result;res(_db);}; r.onerror=()=>rej(r.error); }); }
+async function idbPut(k,b){ const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction('videos','readwrite'); tx.objectStore('videos').put(b,k); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
+async function idbGet(k){ const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction('videos','readonly'); const rq=tx.objectStore('videos').get(k); rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error); }); }
+async function idbDel(k){ const db=await idb(); return new Promise((res,rej)=>{ const tx=db.transaction('videos','readwrite'); tx.objectStore('videos').delete(k); tx.oncomplete=()=>res(); tx.onerror=()=>rej(tx.error); }); }
+
 function renderFilm(){
+  const seg=[['videos','🎬 Videos'],['clips','✂️ Clips'],['footage','📹 Footage']];
+  const segHtml=seg.map(s=>`<div class="seg ${filmView===s[0]?'on':''}" data-filmview="${s[0]}">${s[1]}</div>`).join('');
+  const body = filmView==='clips'?clipsBody() : filmView==='footage'?footageBody() : videosBody();
+  document.getElementById('view-film').innerHTML=`<div class="segctl">${segHtml}</div>${body}`;
+  document.querySelector('.segctl').onclick=e=>{const v=e.target.dataset.filmview; if(v){filmView=v; renderFilm(); window.scrollTo(0,0);}};
+  if(filmView==='clips') wireClips(); else if(filmView==='footage') wireFootage(); else wireVideos();
+}
+
+/* ---- Videos ---- */
+function videosBody(){
   const tags=['All'].concat(FILM_TAGS);
   const filterChips=tags.map(t=>`<div class="chip ${filmFilter===t?'sel':''}" data-filmfilter="${t}">${t}</div>`).join('');
   const tagChips=FILM_TAGS.map(t=>`<div class="chip ${filmDraft.tag===t?'sel':''}" data-filmtag="${t}">${t}</div>`).join('');
@@ -488,53 +521,147 @@ function renderFilm(){
   if(filmFilter!=='All') films=films.filter(f=>f.tag===filmFilter);
   const cards = films.length ? films.map(f=>`
     <div class="film" data-id="${f.id}">
-      <div class="thumb" data-play="${f.id}">
-        <img src="https://img.youtube.com/vi/${f.id}/hqdefault.jpg" alt="" loading="lazy"/>
-        <div class="play">▶</div>
-      </div>
+      <div class="thumb" data-play="${f.id}"><img src="https://img.youtube.com/vi/${f.id}/hqdefault.jpg" alt="" loading="lazy"/><div class="play">▶</div></div>
       <div class="finfo">
         <div class="ftitle">${escapeHtml(f.title)||'Untitled clip'}</div>
         <div class="ftag">${f.tag}</div>
         <div class="factions">
-          <a href="${escapeAttr(f.url)}" target="_blank" rel="noopener">Open in YouTube ↗</a>
+          <a href="${escapeAttr(f.url)}" target="_blank" rel="noopener">Open ↗</a>
+          <button data-clipfrom="${f.id}" class="goldbtn">✂️ Clip</button>
           <button data-del="${f.id}">Remove</button>
         </div>
       </div>
     </div>`).join('')
-    : `<div class="empty">No clips yet.<br/><br/>Save bouts from <b style="color:var(--text)">Oh Sang-uk</b>, <b style="color:var(--text)">Gu Bon-gil</b>, <b style="color:var(--text)">Apithy-Brunet</b> — and your own footage. Steal one thing from each. 🎥</div>`;
-  document.getElementById('view-film').innerHTML=`
+    : `<div class="empty">No videos yet.<br/><br/>Save bouts from <b style="color:var(--text)">Oh Sang-uk</b>, <b style="color:var(--text)">Gu Bon-gil</b>, <b style="color:var(--text)">Apithy-Brunet</b> — and your own. 🎥</div>`;
+  return `
     <div class="card">
-      <div class="eyebrow">🎥 Add a clip</div>
+      <div class="eyebrow">🎬 Add a video</div>
       <input type="text" id="filmUrl" placeholder="Paste a YouTube link" value="${escapeAttr(filmDraft.url)}"/>
-      <input type="text" id="filmTitle" placeholder="Label (optional) — e.g. Oh Sang-uk · attack on prep" value="${escapeAttr(filmDraft.title)}" style="margin-top:8px"/>
+      <input type="text" id="filmTitle" placeholder="Label (optional)" value="${escapeAttr(filmDraft.title)}" style="margin-top:8px"/>
       <label class="fld">Tag</label>
       <div class="chips" id="filmTagChips">${tagChips}</div>
-      <button class="btn sm" id="addFilm" style="margin-top:14px">Save clip</button>
+      <button class="btn sm" id="addFilm" style="margin-top:14px">Save video</button>
     </div>
     <div class="chips" id="filmFilterChips" style="margin:0 2px 14px">${filterChips}</div>
-    <div class="filmgrid">${cards}</div>
-  `;
+    <div class="filmgrid">${cards}</div>`;
+}
+function wireVideos(){
   document.getElementById('filmUrl').oninput=e=>filmDraft.url=e.target.value;
   document.getElementById('filmTitle').oninput=e=>filmDraft.title=e.target.value;
   document.getElementById('filmTagChips').onclick=e=>{const t=e.target.dataset.filmtag; if(t){filmDraft.tag=t; syncChips('filmTagChips','filmtag',t);}};
   document.getElementById('addFilm').onclick=addFilm;
   document.getElementById('filmFilterChips').onclick=e=>{const t=e.target.dataset.filmfilter; if(t){filmFilter=t; renderFilm();}};
   document.querySelectorAll('[data-play]').forEach(el=>el.onclick=()=>playFilm(el.dataset.play));
-  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ state.films=state.films.filter(x=>x.id!==b.dataset.del); save(); renderFilm(); toast('Clip removed'); });
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ state.films=state.films.filter(x=>x.id!==b.dataset.del); save(); renderFilm(); toast('Video removed'); });
+  document.querySelectorAll('[data-clipfrom]').forEach(b=>b.onclick=()=>{ const f=state.films.find(x=>x.id===b.dataset.clipfrom); clipDraft={url:f?f.url:'',start:'',end:'',label:f?f.title:'',tag:f?f.tag:'Technique'}; filmView='clips'; renderFilm(); window.scrollTo(0,0); toast('Set start & end ✂️'); });
 }
 function addFilm(){
   const id=ytId(filmDraft.url);
   if(!id){ toast("Hmm — that doesn't look like a YouTube link"); return; }
-  state.films.push({id, url:filmDraft.url.trim(), title:filmDraft.title.trim(), tag:filmDraft.tag, start:ytStart(filmDraft.url), ts:Date.now()});
-  save(); filmDraft={url:'',title:'',tag:filmDraft.tag}; renderFilm(); toast('Clip saved 🎥');
+  state.films.push({id, url:filmDraft.url.trim(), title:filmDraft.title.trim(), tag:filmDraft.tag, ts:Date.now()});
+  save(); filmDraft={url:'',title:'',tag:filmDraft.tag}; renderFilm(); toast('Video saved 🎬');
 }
 function playFilm(id){
-  const f=state.films.find(x=>x.id===id);
-  const thumb=document.querySelector('.film[data-id="'+id+'"] .thumb');
-  if(!thumb) return;
-  const s=f&&f.start?('&start='+f.start):'';
-  thumb.innerHTML=`<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1${s}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="border:0"></iframe>`;
+  const thumb=document.querySelector('.film[data-id="'+id+'"] .thumb'); if(!thumb) return;
+  thumb.innerHTML=`<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="border:0"></iframe>`;
   thumb.classList.add('playing');
+}
+
+/* ---- Clips (timestamped YouTube moments) ---- */
+function clipsBody(){
+  const tagChips=FILM_TAGS.map(t=>`<div class="chip ${clipDraft.tag===t?'sel':''}" data-cliptag="${t}">${t}</div>`).join('');
+  const clips=state.clips.slice().reverse();
+  const cards = clips.length ? clips.map(c=>`
+    <div class="film" data-cid="${c.id}">
+      <div class="thumb" data-playclip="${c.id}"><img src="https://img.youtube.com/vi/${c.vid}/hqdefault.jpg" alt="" loading="lazy"/><div class="play">▶</div><div class="range">${fmtTime(c.start)} – ${fmtTime(c.end)}</div></div>
+      <div class="finfo">
+        <div class="ftitle">${escapeHtml(c.label)||'Untitled moment'}</div>
+        <div class="ftag">${c.tag} · ${fmtTime(c.end-c.start)} long</div>
+        <div class="factions"><button data-delclip="${c.id}">Remove</button></div>
+      </div>
+    </div>`).join('')
+    : `<div class="empty">No clips yet.<br/><br/>Find a moment worth studying — drop the link + the times (e.g. <b style="color:var(--text)">1:02</b> to <b style="color:var(--text)">1:30</b>) and it replays just that. ✂️</div>`;
+  return `
+    <div class="card">
+      <div class="eyebrow">✂️ Clip a moment</div>
+      <input type="text" id="clipUrl" placeholder="YouTube link" value="${escapeAttr(clipDraft.url)}"/>
+      <div class="timerow">
+        <div><label class="fld">Start</label><input type="text" id="clipStart" placeholder="1:02" value="${escapeAttr(clipDraft.start)}"/></div>
+        <div><label class="fld">End</label><input type="text" id="clipEnd" placeholder="1:30" value="${escapeAttr(clipDraft.end)}"/></div>
+      </div>
+      <label class="fld">Label</label>
+      <input type="text" id="clipLabel" placeholder="e.g. perfect attack-on-prep timing" value="${escapeAttr(clipDraft.label)}"/>
+      <label class="fld">Tag</label>
+      <div class="chips" id="clipTagChips">${tagChips}</div>
+      <button class="btn sm" id="addClip" style="margin-top:14px">Save clip ✂️</button>
+    </div>
+    <div class="filmgrid">${cards}</div>`;
+}
+function wireClips(){
+  document.getElementById('clipUrl').oninput=e=>clipDraft.url=e.target.value;
+  document.getElementById('clipStart').oninput=e=>clipDraft.start=e.target.value;
+  document.getElementById('clipEnd').oninput=e=>clipDraft.end=e.target.value;
+  document.getElementById('clipLabel').oninput=e=>clipDraft.label=e.target.value;
+  document.getElementById('clipTagChips').onclick=e=>{const t=e.target.dataset.cliptag; if(t){clipDraft.tag=t; syncChips('clipTagChips','cliptag',t);}};
+  document.getElementById('addClip').onclick=addClip;
+  document.querySelectorAll('[data-playclip]').forEach(el=>el.onclick=()=>playClip(el.dataset.playclip));
+  document.querySelectorAll('[data-delclip]').forEach(b=>b.onclick=()=>{ state.clips=state.clips.filter(x=>x.id!==b.dataset.delclip); save(); renderFilm(); toast('Clip removed'); });
+}
+function addClip(){
+  const vid=ytId(clipDraft.url); if(!vid){ toast('Need a valid YouTube link'); return; }
+  const s=parseTime(clipDraft.start), e=parseTime(clipDraft.end);
+  if(s==null||e==null){ toast('Enter start & end like 1:02 and 1:30'); return; }
+  if(e<=s){ toast('End must be after start'); return; }
+  state.clips.push({id:uid(), vid, start:s, end:e, label:clipDraft.label.trim(), tag:clipDraft.tag, ts:Date.now()});
+  save(); clipDraft={url:'',start:'',end:'',label:'',tag:clipDraft.tag}; renderFilm(); toast('Clip saved ✂️');
+}
+function playClip(id){
+  const c=state.clips.find(x=>x.id===id); if(!c) return;
+  const thumb=document.querySelector('.film[data-cid="'+id+'"] .thumb'); if(!thumb) return;
+  thumb.innerHTML=`<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${c.vid}?autoplay=1&start=${c.start}&end=${c.end}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="border:0"></iframe>`;
+  thumb.classList.add('playing');
+}
+
+/* ---- Footage (your uploaded videos) ---- */
+function footageBody(){
+  const ups=state.uploads.slice().reverse();
+  const cards = ups.length ? ups.map(u=>`
+    <div class="film" data-uid="${u.id}">
+      <div class="thumb foot" data-playfoot="${u.id}"><div class="footicon">📹</div><div class="play">▶</div></div>
+      <div class="finfo">
+        <input class="labinp" data-lab="${u.id}" value="${escapeAttr(u.label)}" placeholder="Label this clip"/>
+        <div class="chips" style="margin-top:8px">${FOOT_TAGS.map(t=>`<div class="chip mini ${u.tag===t?'sel':''}" data-foottag="${u.id}|${t}">${t}</div>`).join('')}</div>
+        <div class="ftag" style="margin-top:7px">${(u.size/1048576).toFixed(1)} MB · on this device</div>
+        <div class="factions"><button data-delfoot="${u.id}">Remove</button></div>
+      </div>
+    </div>`).join('')
+    : `<div class="empty">No footage yet.<br/><br/>Upload your bouts or your opponents'. Stored on <b style="color:var(--text)">this device</b>, plays offline. Best for short clips. 📹</div>`;
+  return `
+    <div class="card">
+      <div class="eyebrow">📹 Upload footage</div>
+      <p class="note" style="margin-top:0">Your videos or your opponents'. Saved on this device — keep clips short.</p>
+      <input type="file" id="footFile" accept="video/*" style="display:none"/>
+      <button class="btn sm" id="footPick" style="margin-top:10px">Choose a video</button>
+    </div>
+    <div class="filmgrid">${cards}</div>`;
+}
+function wireFootage(){
+  const file=document.getElementById('footFile');
+  document.getElementById('footPick').onclick=()=>file.click();
+  file.onchange=async()=>{ const f=file.files[0]; if(!f) return;
+    try{ const id=uid(); await idbPut(id,f); state.uploads.push({id, name:f.name, label:f.name.replace(/\.[^.]+$/,''), tag:'Mine', size:f.size, ts:Date.now()}); save(); renderFilm(); toast('Footage saved 📹'); }
+    catch(err){ toast('Could not save — device storage may be full'); }
+  };
+  document.querySelectorAll('[data-playfoot]').forEach(el=>el.onclick=()=>playFoot(el.dataset.playfoot));
+  document.querySelectorAll('[data-lab]').forEach(inp=>inp.onchange=()=>{ const u=state.uploads.find(x=>x.id===inp.dataset.lab); if(u){u.label=inp.value; save();} });
+  document.querySelectorAll('[data-foottag]').forEach(c=>c.onclick=()=>{ const a=c.dataset.foottag.split('|'); const u=state.uploads.find(x=>x.id===a[0]); if(u){u.tag=a[1]; save(); renderFilm();} });
+  document.querySelectorAll('[data-delfoot]').forEach(b=>b.onclick=async()=>{ await idbDel(b.dataset.delfoot); state.uploads=state.uploads.filter(x=>x.id!==b.dataset.delfoot); save(); renderFilm(); toast('Footage removed'); });
+}
+async function playFoot(id){
+  const thumb=document.querySelector('.film[data-uid="'+id+'"] .thumb'); if(!thumb) return;
+  try{ const blob=await idbGet(id); if(!blob){ toast('File missing'); return; } const url=URL.createObjectURL(blob);
+    thumb.classList.remove('foot'); thumb.innerHTML=`<video src="${url}" controls autoplay playsinline style="width:100%;height:100%;background:#000;display:block"></video>`; thumb.classList.add('playing');
+  }catch(e){ toast('Could not play'); }
 }
 
 function renderPlaybook(){
@@ -578,7 +705,7 @@ function renderPlaybook(){
 
 /* ---------- Data export/import ---------- */
 function exportData(){
-  const blob=new Blob([JSON.stringify({sessions:state.sessions, plan:state.plan, films:state.films, exported:new Date().toISOString()},null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({sessions:state.sessions, plan:state.plan, films:state.films, clips:state.clips, uploads:state.uploads, exported:new Date().toISOString()},null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='piste-backup-'+todayKey()+'.json'; a.click();
   toast('Backup downloaded 💾');
@@ -591,6 +718,8 @@ function importData(e){
       if(Array.isArray(d.sessions)) state.sessions=d.sessions;
       if(d.plan) state.plan=Object.assign({},DEFAULT_PLAN,d.plan);
       if(Array.isArray(d.films)) state.films=d.films;
+      if(Array.isArray(d.clips)) state.clips=d.clips;
+      if(Array.isArray(d.uploads)) state.uploads=d.uploads;
       save(); updateStreak(); renderProgress(); toast('Data imported ✅');
     }catch(err){ toast('Could not read that file'); } };
   r.readAsText(f);
