@@ -118,6 +118,14 @@
   .arslist b{color:var(--gold)}
   .datarow{display:flex;gap:10px;margin-top:6px}
   .note{font-size:12px;color:var(--faint);line-height:1.5;margin-top:10px}
+  /* Toolbox */
+  .tgroup{margin-bottom:14px}
+  .tgroup:last-child{margin-bottom:0}
+  .tgroup h4{margin:0 0 8px;font-size:13px}
+  .trow{display:flex;flex-direction:column;padding:8px 0;border-bottom:1px solid var(--line)}
+  .tgroup .trow:last-child{border-bottom:none}
+  .trow b{font-size:14px}
+  .trow span{color:var(--muted);font-size:12.5px;margin-top:2px;line-height:1.4}
   /* Film */
   .filmgrid{display:grid;gap:14px}
   .film{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
@@ -197,11 +205,35 @@ const DIALS = [
   ['📏','Distance','how much GROUND each step eats'],
 ];
 const READ = [
-  ['comes forward hard','Presser','Slow Bait / pull-distance'],
-  ['sits back, waits','Waiter','Gear-Change — walk them down'],
-  ['parries early','Early-parrier','feint / one-two — parry air'],
-  ['stop-cuts your march','Counter-attacker','False Stop / 2nd intention'],
-  ['freezes under pressure','Freezer','relentless march, no mercy'],
+  ['charges forward','Presser','Pull distance → riposte · Point-in-line · or beat him with attack-on-prep'],
+  ['hangs back, waits','Waiter','March + gear-change · crowd his distance · simple attack'],
+  ['parries early','Early-parrier','Feint (one-two) · disengage · attack a different line'],
+  ['parries hard & late','Strong-parrier','Beat attack · pull + remise · go to the open line'],
+  ['stop-cuts your march','Counter-attacker','Second intention · take the blade · strong simple, line covered'],
+  ['freezes under pressure','Freezer','Relentless march · fast simple attack, zero hesitation'],
+  ['sticks his arm out','Extended-arm','Beat or take the blade · or attack on prep around it'],
+  ['attacks first, fast starter','Sniper','Pull distance + parry-riposte · Point-in-line · beat his start'],
+  ['long & rangy, owns distance','Spacer','Close HARD, get inside his range, last-moment explosion'],
+  ['bounces in a steady rhythm','Metronome','Break it — stutter / false stop → attack the freeze'],
+];
+const TOOLBOX = [
+  ['⚔️ Attack — you go first', [
+    ['Simple attack','flat-footed / you have distance — straight & fast'],
+    ['Attack on prep','they step or prep slowly → explode as they move'],
+    ['Feint (one-two)','they parry early → fake one line, finish the other'],
+    ['Beat / take-the-blade','their arm or point is out → clear it, then go'],
+  ]],
+  ['🛡️ Defend — let them come', [
+    ['Parry-riposte (LATE)','real committed attack → 4/3/5, take blade, hit back'],
+    ['Pull distance','they over-reach → make it fall short → riposte'],
+    ['Point-in-line','they rush in → arm straight, they must clear it first'],
+    ['Stop-cut to the arm','slow / wide prep → counter into it (mind priority)'],
+  ]],
+  ['🪤 Trap — make them bite', [
+    ['Second intention','short attack to draw their answer → parry-riposte THAT'],
+    ['March + pull','pressure in → sudden stop → punish the reaction'],
+    ['Remise','attack parried? instantly re-hit — never admire the miss'],
+  ]],
 ];
 const ARSENAL = [
   ['Hold the middle','I finish ~7/10 of attacks from a planted middle. The data says plant and GO — only retreat if I chose it to bait.'],
@@ -510,6 +542,7 @@ function renderPlaybook(){
   const songRows=SONGS.map(r=>`<tr><td class="strong">${r[0]}</td><td>${r[1]}</td><td style="color:var(--gold)">${r[2]}</td></tr>`).join('');
   const readRows=READ.map(r=>`<tr><td>${r[0]}</td><td class="strong">${r[1]}</td><td style="color:var(--accent)">${r[2]}</td></tr>`).join('');
   const ars=ARSENAL.map(a=>`<li><b>${a[0]}</b> — ${a[1]}</li>`).join('');
+  const tbox=TOOLBOX.map(g=>`<div class="tgroup"><h4>${g[0]}</h4>${g[1].map(t=>`<div class="trow"><b>${t[0]}</b><span>${t[1]}</span></div>`).join('')}</div>`).join('');
   document.getElementById('view-playbook').innerHTML=`
     <div class="card hero">
       <div class="eyebrow">🗺️ The one question</div>
@@ -519,6 +552,9 @@ function renderPlaybook(){
 
     <h2 class="section">✅ My arsenal</h2>
     <div class="card"><ul class="arslist">${ars}</ul></div>
+
+    <h2 class="section">🧰 Your toolbox — what you can play</h2>
+    <div class="card">${tbox}<p class="note">Know every tool — then the read below tells you which to grab.</p></div>
 
     <h2 class="section">🎼 The 3 dials</h2>
     <div class="card"><div class="dials">${dials}</div>
