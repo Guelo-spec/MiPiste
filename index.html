@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#0e0f13" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Piste" />
+<title>Piste — Guel's Sabre Brain</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon-180.png" />
+<link rel="icon" type="image/png" href="icon-192.png" />
+<style>
+  :root{
+    --bg:#0e0f13; --surface:#171922; --surface2:#1f2230; --line:#2b2f3d;
+    --text:#e9ebf2; --muted:#9aa2b4; --faint:#6b7283;
+    --accent:#e6394f; --accent-d:#b42a3c; --gold:#f0b13b; --steel:#9aa6bd;
+    --good:#37c187; --warn:#f0a13b; --bad:#e6394f;
+    --r:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  .app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding-bottom:84px}
+  /* Header */
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#12141c, #12141cE6);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .bar{width:4px;height:22px;background:var(--accent);border-radius:3px;box-shadow:0 0 12px var(--accent)}
+  .brand h1{font-size:18px;letter-spacing:3px;margin:0;font-weight:800}
+  .brand small{display:block;font-size:9px;letter-spacing:2px;color:var(--faint);font-weight:600;margin-top:1px}
+  .streak{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--line);
+    padding:6px 11px;border-radius:999px;font-weight:800;font-size:14px}
+  .streak .n{color:var(--gold)}
+  /* Views */
+  main{flex:1;padding:18px 16px 8px}
+  .view{display:none;animation:fade .25s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+  .card.hero{background:linear-gradient(135deg,#211420,#171922 60%);border-color:#3a2230}
+  .eyebrow{font-size:11px;letter-spacing:2px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+  h2.section{font-size:13px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;font-weight:700;margin:22px 4px 10px}
+  .focus-title{font-size:24px;font-weight:850;margin:2px 0 4px;line-height:1.15}
+  .cue{display:inline-block;background:var(--accent);color:#fff;font-weight:800;font-size:13px;padding:5px 12px;border-radius:999px;box-shadow:0 4px 14px rgba(230,57,79,.35)}
+  .toy{margin-top:14px;padding:12px 14px;background:#15171f;border:1px dashed #3a3f52;border-radius:12px}
+  .toy .lab{font-size:10px;letter-spacing:1.5px;color:var(--gold);font-weight:800;text-transform:uppercase}
+  .toy .name{font-size:17px;font-weight:800;margin-top:2px}
+  .toy .desc{color:var(--muted);font-size:14px;margin-top:3px;line-height:1.4}
+  .reminders{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+  .pill{flex:1;min-width:120px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+  .pill .t{font-size:11px;color:var(--faint);font-weight:700;letter-spacing:.5px}
+  .pill .v{font-size:14px;font-weight:700;margin-top:2px}
+  .mantra{text-align:center;font-style:italic;color:var(--steel);font-size:14px;margin:16px 6px 4px;line-height:1.5}
+  .cues-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .cuechip{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+  .cuechip .ico{font-size:18px}
+  .cuechip .nm{font-size:12px;color:var(--muted);font-weight:600;margin-top:3px}
+  .cuechip .cc{font-size:14px;font-weight:800;margin-top:1px}
+  /* Controls */
+  label.fld{display:block;font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin:14px 2px 7px;text-transform:uppercase}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:999px;padding:9px 14px;font-size:14px;font-weight:700;cursor:pointer;transition:.15s}
+  .chip.sel{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(230,57,79,.3)}
+  .chip.f-Light.sel{background:var(--good);border-color:var(--good)}
+  .chip.f-OK.sel{background:var(--warn);border-color:var(--warn);color:#1a1209}
+  .chip.f-Heavy.sel{background:var(--bad);border-color:var(--bad)}
+  select,textarea,input[type=text]{width:100%;background:var(--surface2);border:1px solid var(--line);color:var(--text);
+    border-radius:12px;padding:12px;font-size:15px;font-family:inherit;margin-top:2px}
+  textarea{resize:vertical;min-height:52px}
+  .stepper{display:flex;align-items:center;gap:14px}
+  .stepper button{width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-size:24px;font-weight:800;cursor:pointer}
+  .stepper .num{font-size:30px;font-weight:850;min-width:64px;text-align:center}
+  .stepper .num small{font-size:14px;color:var(--faint);font-weight:700}
+  .moods{display:flex;justify-content:space-between;gap:6px}
+  .mood{flex:1;text-align:center;padding:10px 0;background:var(--surface2);border:1px solid var(--line);border-radius:12px;font-size:24px;cursor:pointer;transition:.15s}
+  .mood.sel{background:var(--accent);border-color:var(--accent);transform:translateY(-2px)}
+  .btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:850;letter-spacing:.5px;cursor:pointer;margin-top:18px;box-shadow:0 6px 20px rgba(230,57,79,.35)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text);box-shadow:none;font-weight:700}
+  .btn.sm{padding:11px;font-size:14px;margin-top:0}
+  .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);background:#16241c;border:1px solid var(--good);
+    color:#d7ffe9;padding:13px 18px;border-radius:14px;font-weight:700;font-size:14px;max-width:88%;text-align:center;opacity:0;pointer-events:none;transition:.3s;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* Stats + charts */
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .stat .v{font-size:28px;font-weight:850;line-height:1}
+  .stat .l{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-top:5px;text-transform:uppercase}
+  .stat .v.gold{color:var(--gold)} .stat .v.acc{color:var(--accent)} .stat .v.good{color:var(--good)}
+  .chartwrap{margin-top:8px}
+  .chartwrap .cap{font-size:11px;color:var(--faint);font-weight:700;letter-spacing:.5px;margin:2px 2px 8px;text-transform:uppercase}
+  /* Recent log */
+  .logrow{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}
+  .logrow:last-child{border-bottom:none}
+  .logrow .d{font-size:12px;color:var(--faint);font-weight:700;min-width:52px}
+  .logrow .em{font-size:20px}
+  .logrow .meta{flex:1}
+  .logrow .meta .w{font-size:14px;font-weight:600}
+  .logrow .meta .s{font-size:12px;color:var(--muted);margin-top:2px}
+  .empty{color:var(--faint);text-align:center;padding:26px 10px;font-size:14px}
+  /* Playbook tables */
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td .strong{font-weight:800}
+  .dials{display:grid;gap:9px}
+  .dial{display:flex;gap:11px;align-items:center;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+  .dial .ic{font-size:20px}
+  .dial b{font-size:14px} .dial span{display:block;color:var(--muted);font-size:13px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .style{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:13px}
+  .style h4{margin:0 0 7px;font-size:14px}
+  .style ul{margin:0;padding-left:16px;color:var(--muted);font-size:13px;line-height:1.5}
+  .arslist{list-style:none;padding:0;margin:0}
+  .arslist li{padding:11px 0;border-bottom:1px solid var(--line);font-size:14px;line-height:1.45}
+  .arslist li:last-child{border-bottom:none}
+  .arslist b{color:var(--gold)}
+  .datarow{display:flex;gap:10px;margin-top:6px}
+  .note{font-size:12px;color:var(--faint);line-height:1.5;margin-top:10px}
+  /* Film */
+  .filmgrid{display:grid;gap:14px}
+  .film{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .thumb{position:relative;width:100%;aspect-ratio:16/9;background:#000;cursor:pointer;display:block}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .play{position:absolute;inset:0;margin:auto;width:54px;height:54px;display:flex;align-items:center;justify-content:center;background:rgba(230,57,79,.92);color:#fff;border-radius:50%;font-size:20px;box-shadow:0 6px 18px rgba(0,0,0,.55);padding-left:3px}
+  .thumb iframe{width:100%;height:100%;display:block}
+  .thumb.playing{cursor:default}
+  .finfo{padding:12px 14px}
+  .ftitle{font-weight:800;font-size:15px;line-height:1.3}
+  .ftag{color:var(--muted);font-size:12px;margin-top:3px;font-weight:600;letter-spacing:.3px}
+  .factions{display:flex;gap:16px;align-items:center;margin-top:11px}
+  .factions a{color:var(--accent);font-weight:700;font-size:13px;text-decoration:none}
+  .factions button{background:none;border:none;color:var(--faint);font-size:13px;cursor:pointer;font-weight:600;padding:0}
+  /* Bottom nav */
+  nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:#0f1118;border-top:1px solid var(--line);
+    display:flex;max-width:520px;margin:0 auto;padding:8px 6px calc(8px + env(safe-area-inset-bottom))}
+  nav button{flex:1;background:none;border:none;color:var(--faint);font-size:10px;font-weight:700;letter-spacing:.5px;
+    display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;cursor:pointer}
+  nav button .i{font-size:21px;filter:grayscale(1) opacity(.6)}
+  nav button.on{color:var(--text)} nav button.on .i{filter:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><span class="bar"></span><div><h1>PISTE</h1><small>GUEL · SABRE</small></div></div>
+    <div class="streak">🔥 <span class="n" id="streakN">0</span>&nbsp;day</div>
+  </header>
+
+  <main>
+    <!-- TONIGHT -->
+    <section class="view active" id="view-tonight"></section>
+    <!-- LOG -->
+    <section class="view" id="view-log"></section>
+    <!-- FILM -->
+    <section class="view" id="view-film"></section>
+    <!-- PROGRESS -->
+    <section class="view" id="view-progress"></section>
+    <!-- PLAYBOOK -->
+    <section class="view" id="view-playbook"></section>
+  </main>
+
+  <nav>
+    <button data-tab="tonight" class="on"><span class="i">🎯</span>Tonight</button>
+    <button data-tab="log"><span class="i">✍️</span>Log</button>
+    <button data-tab="film"><span class="i">🎥</span>Film</button>
+    <button data-tab="progress"><span class="i">📈</span>Progress</button>
+    <button data-tab="playbook"><span class="i">📖</span>Playbook</button>
+  </nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- Pre-loaded with Guel's game ---------- */
+const SYSTEMS = [
+  {key:'mindset', icon:'🧠', name:'Mindset',          cue:'Stand & plan',          note:'relaxed · a plan ready · confidence'},
+  {key:'middle',  icon:'🟢', name:'Own the middle',    cue:'Plant ▸ vary ▸ finish', note:"7/10 from here — don't drift back, it flips priority"},
+  {key:'tempo',   icon:'👣', name:'Tempo & footwork',  cue:'Change the song',       note:'watch their feet · vary rhythm · kill the bounce'},
+  {key:'distance',icon:'📏', name:'Distance',          cue:'Invite, then vanish',   note:'make their attack fall short → riposte'},
+  {key:'blade',   icon:'⚔️', name:'Blade & priority',  cue:'Take the line, then go', note:'win right-of-way, then finish'},
+  {key:'defense', icon:'🛡️', name:'Defense',           cue:'Parry last',            note:'parry at the last instant — no early opens'},
+];
+const sysByKey = k => SYSTEMS.find(s=>s.key===k) || SYSTEMS[1];
+
+const SONGS = [
+  ['🚀 Gear-Change 🇰🇷','controlled… then VIOLENT acceleration, last 2 steps','react too late — done before the parry'],
+  ['🥁 The Stutter','even cadence → sudden hitch → go','breaks timing — freeze or early commit'],
+  ['⏸️ False Stop','march, then FULL freeze (look done)','they relax / attack the stop → parry-riposte'],
+  ['🤜 Press & Release','crush distance, then a small give','pulls them onto your prepared counter'],
+  ['📐 Step-Length Lie','same speed: big–big–SMALL–explode','misjudge distance — in range too soon'],
+  ['🐌 Slow Bait 🇫🇷','deliberately slow, readable prep','tempts attack-on-prep → you punish it'],
+];
+const DIALS = [
+  ['🎚️','Tempo','how FAST the feet move'],
+  ['🥁','Rhythm','the PATTERN — even vs broken'],
+  ['📏','Distance','how much GROUND each step eats'],
+];
+const READ = [
+  ['comes forward hard','Presser','Slow Bait / pull-distance'],
+  ['sits back, waits','Waiter','Gear-Change — walk them down'],
+  ['parries early','Early-parrier','feint / one-two — parry air'],
+  ['stop-cuts your march','Counter-attacker','False Stop / 2nd intention'],
+  ['freezes under pressure','Freezer','relentless march, no mercy'],
+];
+const ARSENAL = [
+  ['Hold the middle','I finish ~7/10 of attacks from a planted middle. The data says plant and GO — only retreat if I chose it to bait.'],
+  ['UE footwork','small sharp forward → bigger forward feint → back foot to front heel → explosive lunge.'],
+  ['Long attacks','outside the guard line — landed clean Mon Jun 1.'],
+  ['Calm = my best','Xavier warm-up bout: stand, plan ready, execute. Relaxed beats nervous-fast.'],
+];
+const MANTRA = "Train like I've never won. Compete like I never lost.";
+
+/* ---------- State ---------- */
+const DEFAULT_PLAN = {system:'middle', toy:'The False Stop', toyDesc:'Plant the middle. March, then FREEZE — see who flinches.'};
+let state = load();
+function load(){
+  try{
+    return {
+      sessions: JSON.parse(localStorage.getItem('piste_sessions')||'[]'),
+      plan: Object.assign({}, DEFAULT_PLAN, JSON.parse(localStorage.getItem('piste_plan')||'{}')),
+      films: JSON.parse(localStorage.getItem('piste_films')||'[]')
+    };
+  }catch(e){ return {sessions:[], plan:Object.assign({},DEFAULT_PLAN), films:[]}; }
+}
+function save(){
+  try{
+    localStorage.setItem('piste_sessions', JSON.stringify(state.sessions));
+    localStorage.setItem('piste_plan', JSON.stringify(state.plan));
+    localStorage.setItem('piste_films', JSON.stringify(state.films));
+  }catch(e){}
+}
+
+/* ---------- Date / streak helpers ---------- */
+function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function todayKey(){ return ymd(new Date()); }
+function shortDate(key){ const [y,m,dd]=key.split('-'); return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+(+dd); }
+function uniqueDates(){ return [...new Set(state.sessions.map(s=>s.date))]; }
+function currentStreak(){
+  const set=new Set(uniqueDates()); let n=0; let d=new Date();
+  if(!set.has(ymd(d))) d.setDate(d.getDate()-1);
+  while(set.has(ymd(d))){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+function bestStreak(){
+  const ds=uniqueDates().sort(); let best=0,run=0,prev=null;
+  for(const k of ds){
+    if(prev){ const a=new Date(prev),b=new Date(k); const diff=Math.round((b-a)/86400000); run = diff===1?run+1:1; }
+    else run=1;
+    best=Math.max(best,run); prev=k;
+  }
+  return best;
+}
+const MOOD_EM=['','😞','😕','😐','🙂','😄'];
+function recent(n){ return state.sessions.slice(-n); }
+function avg(arr){ return arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0; }
+
+/* ---------- Tiny SVG bar chart ---------- */
+function barChart(values, opts){
+  opts=opts||{}; const max=opts.max || Math.max(1,...values);
+  const W=Math.max(values.length,1)*30, H=70, bw=18, gap=12;
+  if(!values.length) return '<div class="empty">No sessions yet — log one to see this grow.</div>';
+  let bars='';
+  values.forEach((v,i)=>{
+    const h=Math.max(3, Math.round((v/max)*(H-14)));
+    const x=i*(bw+gap)+6, y=H-h;
+    const col=opts.color ? opts.color(v) : 'var(--accent)';
+    bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="4" fill="${col}"></rect>`;
+    bars+=`<text x="${x+bw/2}" y="${H-h-4}" font-size="9" fill="#9aa2b4" text-anchor="middle">${v}</text>`;
+  });
+  return `<svg viewBox="0 0 ${Math.max(W,60)} ${H}" width="100%" height="${H}" preserveAspectRatio="xMinYMid meet">${bars}</svg>`;
+}
+const moodColor = v => v>=4?'var(--good)': v>=3?'var(--warn)':'var(--bad)';
+
+/* ---------- Renderers ---------- */
+function renderTonight(){
+  const sys=sysByKey(state.plan.system);
+  const opts=SYSTEMS.map(s=>`<option value="${s.key}" ${s.key===state.plan.system?'selected':''}>${s.icon} ${s.name}</option>`).join('');
+  const cues=SYSTEMS.filter(s=>s.key!=='middle').map(s=>`<div class="cuechip"><div class="ico">${s.icon}</div><div class="nm">${s.name}</div><div class="cc">${s.cue}</div></div>`).join('');
+  document.getElementById('view-tonight').innerHTML = `
+    <div class="card hero">
+      <div class="eyebrow">🎯 Tonight's plan</div>
+      <div class="focus-title">${sys.icon} ${sys.name}</div>
+      <span class="cue">${sys.cue}</span>
+      <p style="color:var(--muted);font-size:14px;margin:12px 0 0;line-height:1.45">${sys.note}</p>
+      <div class="toy">
+        <div class="lab">🎬 One new toy to test</div>
+        <div class="name">${state.plan.toy||'—'}</div>
+        <div class="desc">${state.plan.toyDesc||''}</div>
+      </div>
+      <div class="reminders">
+        <div class="pill"><div class="t">⛽ FUEL</div><div class="v">Light, not loaded</div></div>
+        <div class="pill"><div class="t">🧠 MIND</div><div class="v">Stand · plan · relaxed</div></div>
+      </div>
+      <div class="mantra">"${MANTRA}"</div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">⚙️ Set tonight's focus</div>
+      <label class="fld">Today's ONE system</label>
+      <select id="planSys">${opts}</select>
+      <label class="fld">One new toy</label>
+      <input type="text" id="planToy" value="${(state.plan.toy||'').replace(/"/g,'&quot;')}" placeholder="e.g. The False Stop"/>
+      <input type="text" id="planToyDesc" value="${(state.plan.toyDesc||'').replace(/"/g,'&quot;')}" placeholder="how you'll test it" style="margin-top:8px"/>
+      <button class="btn sm ghost" id="savePlan" style="margin-top:12px">Save plan</button>
+    </div>
+
+    <h2 class="section">My cues</h2>
+    <div class="cues-grid">${cues}</div>
+    <button class="btn" id="goLog">Done training? Log it →</button>
+  `;
+  document.getElementById('planSys').onchange=e=>{ state.plan.system=e.target.value; save(); renderTonight(); };
+  document.getElementById('savePlan').onclick=()=>{
+    state.plan.toy=document.getElementById('planToy').value.trim();
+    state.plan.toyDesc=document.getElementById('planToyDesc').value.trim();
+    save(); renderTonight(); toast('Plan loaded. Go to work. 🤺');
+  };
+  document.getElementById('goLog').onclick=()=>switchTab('log');
+}
+
+let form = freshForm();
+function freshForm(){ return {type:'Bout night', fuel:'', songs:0, leaks:0, win:'', fix:'', mood:0}; }
+function renderLog(){
+  const types=['Training','Lesson','Bout night','Rest'];
+  const fuels=['Light','OK','Heavy'];
+  const moods=[1,2,3,4,5].map(m=>`<div class="mood ${form.mood===m?'sel':''}" data-mood="${m}">${MOOD_EM[m]}</div>`).join('');
+  document.getElementById('view-log').innerHTML=`
+    <div class="card">
+      <div class="eyebrow">✍️ Log session — ${shortDate(todayKey())}</div>
+      <label class="fld">Session type</label>
+      <div class="chips" id="typeChips">${types.map(t=>`<div class="chip ${form.type===t?'sel':''}" data-type="${t}">${t}</div>`).join('')}</div>
+
+      <label class="fld">⛽ How did you fuel?</label>
+      <div class="chips" id="fuelChips">${fuels.map(f=>`<div class="chip f-${f} ${form.fuel===f?'sel':''}" data-fuel="${f}">${f}</div>`).join('')}</div>
+
+      <label class="fld">🎵 Songs changed (out of 10) — the real score</label>
+      <div class="stepper">
+        <button data-step="songs:-1">−</button>
+        <div class="num"><span id="songsN">${form.songs}</span><small>/10</small></div>
+        <button data-step="songs:1">+</button>
+      </div>
+
+      <label class="fld">⬅️ Times you leaked backward (keep low)</label>
+      <div class="stepper">
+        <button data-step="leaks:-1">−</button>
+        <div class="num"><span id="leaksN">${form.leaks}</span></div>
+        <button data-step="leaks:1">+</button>
+      </div>
+
+      <label class="fld">✅ One win</label>
+      <textarea id="winT" placeholder="one thing that worked">${form.win}</textarea>
+      <label class="fld">🔧 One fix → next session</label>
+      <textarea id="fixT" placeholder="one thing to sharpen">${form.fix}</textarea>
+
+      <label class="fld">🧠 Mood</label>
+      <div class="moods" id="moodRow">${moods}</div>
+
+      <button class="btn" id="saveLog">Save session</button>
+    </div>
+    <h2 class="section">Recent</h2>
+    <div class="card" id="recentCard"></div>
+  `;
+  // handlers
+  document.getElementById('typeChips').onclick=e=>{ const t=e.target.dataset.type; if(t){form.type=t; syncChips('typeChips','type',t);} };
+  document.getElementById('fuelChips').onclick=e=>{ const f=e.target.dataset.fuel; if(f){form.fuel=f; syncChips('fuelChips','fuel',f);} };
+  document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{
+    const [k,d]=b.dataset.step.split(':'); form[k]=Math.max(0, Math.min(k==='songs'?10:99, form[k]+(+d)));
+    document.getElementById(k+'N').textContent=form[k];
+  });
+  document.getElementById('moodRow').onclick=e=>{ const m=+e.target.dataset.mood; if(m){form.mood=m;
+    document.querySelectorAll('#moodRow .mood').forEach(x=>x.classList.toggle('sel',+x.dataset.mood===m)); } };
+  document.getElementById('winT').oninput=e=>form.win=e.target.value;
+  document.getElementById('fixT').oninput=e=>form.fix=e.target.value;
+  document.getElementById('saveLog').onclick=saveLog;
+  renderRecent();
+}
+function syncChips(id,key,val){ document.querySelectorAll('#'+id+' .chip').forEach(c=>c.classList.toggle('sel',c.dataset[key]===val)); }
+function renderRecent(){
+  const box=document.getElementById('recentCard'); if(!box) return;
+  const list=recent(6).slice().reverse();
+  if(!list.length){ box.innerHTML='<div class="empty">No sessions logged yet.</div>'; return; }
+  box.innerHTML=list.map(s=>`<div class="logrow">
+      <div class="d">${shortDate(s.date)}</div>
+      <div class="em">${MOOD_EM[s.mood]||'·'}</div>
+      <div class="meta"><div class="w">${s.win? s.win : '<span style="color:var(--faint)">no note</span>'}</div>
+        <div class="s">${s.type} · 🎵 ${s.songs}/10${s.leaks?` · ⬅️ ${s.leaks}`:''}</div></div>
+    </div>`).join('');
+}
+function saveLog(){
+  if(!form.mood){ toast('Tap a mood first 🙂'); return; }
+  const entry={date:todayKey(), type:form.type, fuel:form.fuel, songs:form.songs, leaks:form.leaks, win:form.win.trim(), fix:form.fix.trim(), mood:form.mood, ts:Date.now()};
+  state.sessions.push(entry); save();
+  const msg = form.songs>=8 ? `Elite. ${form.songs} songs changed — the scoreboard is noise. 🔥`
+            : form.songs>=5 ? `Logged. ${form.songs} songs — process over scoreboard. 💪`
+            : `Logged. Honest reps build the streak. Tomorrow, change one more song.`;
+  form=freshForm(); updateStreak(); renderLog(); toast(msg);
+}
+
+function renderProgress(){
+  const s=state.sessions;
+  const last7=recent(7);
+  const moodAvg=avg(last7.map(x=>x.mood));
+  const songAvg=avg(last7.map(x=>x.songs));
+  const moods=recent(14).map(x=>x.mood);
+  const songs=recent(14).map(x=>x.songs);
+  document.getElementById('view-progress').innerHTML=`
+    <div class="stats">
+      <div class="stat"><div class="v gold">🔥 ${currentStreak()}</div><div class="l">Current streak</div></div>
+      <div class="stat"><div class="v">${s.length}</div><div class="l">Total sessions</div></div>
+      <div class="stat"><div class="v acc">${songAvg.toFixed(1)}</div><div class="l">Avg songs (last 7)</div></div>
+      <div class="stat"><div class="v good">${moodAvg? moodAvg.toFixed(1):'—'}</div><div class="l">Avg mood (last 7)</div></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div class="chartwrap"><div class="cap">😊 Mood — last 14</div>${barChart(moods,{max:5,color:moodColor})}</div>
+    </div>
+    <div class="card">
+      <div class="chartwrap"><div class="cap">🎵 Songs changed — last 14</div>${barChart(songs,{max:10})}</div>
+    </div>
+    <div class="card">
+      <div class="eyebrow">📌 The point</div>
+      <p style="font-size:14px;color:var(--muted);line-height:1.5;margin:0">You can't control the scoreboard. You can control the songs and the streak. Watch <b style="color:var(--text)">those</b> bars climb — that's you getting better, win or lose.</p>
+      <p style="font-size:13px;color:var(--faint);margin:12px 0 0">Best streak: <b style="color:var(--gold)">${bestStreak()} days</b></p>
+    </div>
+    <div class="card">
+      <div class="eyebrow">💾 Your data (Phase-1 sync)</div>
+      <p class="note" style="margin-top:0">Back up or move your data between devices until auto-sync lands.</p>
+      <div class="datarow">
+        <button class="btn sm ghost" id="exportBtn">⬇️ Export</button>
+        <button class="btn sm ghost" id="importBtn">⬆️ Import</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none"/>
+    </div>
+  `;
+  document.getElementById('exportBtn').onclick=exportData;
+  document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+  document.getElementById('importFile').onchange=importData;
+}
+
+/* ---------- Film Room ---------- */
+const FILM_TAGS=['Technique','Inspiration','My bouts','Opponent'];
+let filmFilter='All';
+let filmDraft={url:'',title:'',tag:'Technique'};
+function ytId(url){
+  if(!url) return null;
+  const m=url.trim().match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return m?m[1]:null;
+}
+function ytStart(url){ const m=(url||'').match(/[?&](?:t|start)=(\d+)/); return m?+m[1]:0; }
+function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function escapeAttr(s){return (s||'').replace(/"/g,'&quot;');}
+function renderFilm(){
+  const tags=['All'].concat(FILM_TAGS);
+  const filterChips=tags.map(t=>`<div class="chip ${filmFilter===t?'sel':''}" data-filmfilter="${t}">${t}</div>`).join('');
+  const tagChips=FILM_TAGS.map(t=>`<div class="chip ${filmDraft.tag===t?'sel':''}" data-filmtag="${t}">${t}</div>`).join('');
+  let films=state.films.slice().reverse();
+  if(filmFilter!=='All') films=films.filter(f=>f.tag===filmFilter);
+  const cards = films.length ? films.map(f=>`
+    <div class="film" data-id="${f.id}">
+      <div class="thumb" data-play="${f.id}">
+        <img src="https://img.youtube.com/vi/${f.id}/hqdefault.jpg" alt="" loading="lazy"/>
+        <div class="play">▶</div>
+      </div>
+      <div class="finfo">
+        <div class="ftitle">${escapeHtml(f.title)||'Untitled clip'}</div>
+        <div class="ftag">${f.tag}</div>
+        <div class="factions">
+          <a href="${escapeAttr(f.url)}" target="_blank" rel="noopener">Open in YouTube ↗</a>
+          <button data-del="${f.id}">Remove</button>
+        </div>
+      </div>
+    </div>`).join('')
+    : `<div class="empty">No clips yet.<br/><br/>Save bouts from <b style="color:var(--text)">Oh Sang-uk</b>, <b style="color:var(--text)">Gu Bon-gil</b>, <b style="color:var(--text)">Apithy-Brunet</b> — and your own footage. Steal one thing from each. 🎥</div>`;
+  document.getElementById('view-film').innerHTML=`
+    <div class="card">
+      <div class="eyebrow">🎥 Add a clip</div>
+      <input type="text" id="filmUrl" placeholder="Paste a YouTube link" value="${escapeAttr(filmDraft.url)}"/>
+      <input type="text" id="filmTitle" placeholder="Label (optional) — e.g. Oh Sang-uk · attack on prep" value="${escapeAttr(filmDraft.title)}" style="margin-top:8px"/>
+      <label class="fld">Tag</label>
+      <div class="chips" id="filmTagChips">${tagChips}</div>
+      <button class="btn sm" id="addFilm" style="margin-top:14px">Save clip</button>
+    </div>
+    <div class="chips" id="filmFilterChips" style="margin:0 2px 14px">${filterChips}</div>
+    <div class="filmgrid">${cards}</div>
+  `;
+  document.getElementById('filmUrl').oninput=e=>filmDraft.url=e.target.value;
+  document.getElementById('filmTitle').oninput=e=>filmDraft.title=e.target.value;
+  document.getElementById('filmTagChips').onclick=e=>{const t=e.target.dataset.filmtag; if(t){filmDraft.tag=t; syncChips('filmTagChips','filmtag',t);}};
+  document.getElementById('addFilm').onclick=addFilm;
+  document.getElementById('filmFilterChips').onclick=e=>{const t=e.target.dataset.filmfilter; if(t){filmFilter=t; renderFilm();}};
+  document.querySelectorAll('[data-play]').forEach(el=>el.onclick=()=>playFilm(el.dataset.play));
+  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ state.films=state.films.filter(x=>x.id!==b.dataset.del); save(); renderFilm(); toast('Clip removed'); });
+}
+function addFilm(){
+  const id=ytId(filmDraft.url);
+  if(!id){ toast("Hmm — that doesn't look like a YouTube link"); return; }
+  state.films.push({id, url:filmDraft.url.trim(), title:filmDraft.title.trim(), tag:filmDraft.tag, start:ytStart(filmDraft.url), ts:Date.now()});
+  save(); filmDraft={url:'',title:'',tag:filmDraft.tag}; renderFilm(); toast('Clip saved 🎥');
+}
+function playFilm(id){
+  const f=state.films.find(x=>x.id===id);
+  const thumb=document.querySelector('.film[data-id="'+id+'"] .thumb');
+  if(!thumb) return;
+  const s=f&&f.start?('&start='+f.start):'';
+  thumb.innerHTML=`<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1${s}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="border:0"></iframe>`;
+  thumb.classList.add('playing');
+}
+
+function renderPlaybook(){
+  const dials=DIALS.map(d=>`<div class="dial"><span class="ic">${d[0]}</span><div><b>${d[1]}</b><span>${d[2]}</span></div></div>`).join('');
+  const songRows=SONGS.map(r=>`<tr><td class="strong">${r[0]}</td><td>${r[1]}</td><td style="color:var(--gold)">${r[2]}</td></tr>`).join('');
+  const readRows=READ.map(r=>`<tr><td>${r[0]}</td><td class="strong">${r[1]}</td><td style="color:var(--accent)">${r[2]}</td></tr>`).join('');
+  const ars=ARSENAL.map(a=>`<li><b>${a[0]}</b> — ${a[1]}</li>`).join('');
+  document.getElementById('view-playbook').innerHTML=`
+    <div class="card hero">
+      <div class="eyebrow">🗺️ The one question</div>
+      <div class="focus-title" style="font-size:21px">Who commits — and when?</div>
+      <p style="color:var(--muted);font-size:14px;margin:10px 0 0;line-height:1.45">Make <i>them</i> commit wrong (parry-riposte / pull distance), or commit first with timing they can't answer (attack / attack on prep).</p>
+    </div>
+
+    <h2 class="section">✅ My arsenal</h2>
+    <div class="card"><ul class="arslist">${ars}</ul></div>
+
+    <h2 class="section">🎼 The 3 dials</h2>
+    <div class="card"><div class="dials">${dials}</div>
+      <p class="note">Change ONE dial, hold the others → a new song. Amateurs only turn speed.</p></div>
+
+    <h2 class="section">🎶 Song menu</h2>
+    <div class="card" style="overflow-x:auto"><table><tr><th>Song</th><th>How</th><th>Forces</th></tr>${songRows}</table></div>
+
+    <h2 class="section">🥷 Steal from both</h2>
+    <div class="two">
+      <div class="style"><h4>🇰🇷 Korea</h4><ul><li>Relentless pressure</li><li>Violent gear-changes</li><li>Takes the attack</li><li><b style="color:var(--text)">Steal:</b> the explosive march</li></ul></div>
+      <div class="style"><h4>🇫🇷 France</h4><ul><li>Distance & patience</li><li>The pull & counter</li><li>Draws your attack</li><li><b style="color:var(--text)">Steal:</b> the bait</li></ul></div>
+    </div>
+    <p class="note" style="padding:0 4px">You're a Korean-style finisher (7/10). Your untapped points are France's game — <b style="color:var(--text)">borrow the bait.</b></p>
+
+    <h2 class="section">👁️ Read, then play</h2>
+    <div class="card" style="overflow-x:auto"><table><tr><th>If they…</th><th>They're a…</th><th>Play…</th></tr>${readRows}</table></div>
+    <p class="note" style="padding:0 4px 10px">First 3 touches = scouting. Name the type, then pick the song.</p>
+  `;
+}
+
+/* ---------- Data export/import ---------- */
+function exportData(){
+  const blob=new Blob([JSON.stringify({sessions:state.sessions, plan:state.plan, films:state.films, exported:new Date().toISOString()},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='piste-backup-'+todayKey()+'.json'; a.click();
+  toast('Backup downloaded 💾');
+}
+function importData(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+      const d=JSON.parse(r.result);
+      if(Array.isArray(d.sessions)) state.sessions=d.sessions;
+      if(d.plan) state.plan=Object.assign({},DEFAULT_PLAN,d.plan);
+      if(Array.isArray(d.films)) state.films=d.films;
+      save(); updateStreak(); renderProgress(); toast('Data imported ✅');
+    }catch(err){ toast('Could not read that file'); } };
+  r.readAsText(f);
+}
+
+/* ---------- Shell ---------- */
+function updateStreak(){ document.getElementById('streakN').textContent=currentStreak(); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
+const RENDER={tonight:renderTonight, log:renderLog, film:renderFilm, progress:renderProgress, playbook:renderPlaybook};
+function switchTab(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===name));
+  RENDER[name](); window.scrollTo(0,0);
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+
+/* boot */
+updateStreak(); renderTonight();
+
+/* PWA: offline + installable */
+if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
+</script>
+</body>
+</html>
