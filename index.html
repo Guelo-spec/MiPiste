@@ -215,6 +215,11 @@ nav button .i svg{ width:24px; height:24px; display:block; margin:0 auto; }
 .sc-ic svg{ width:23px; height:23px; color:var(--accent); }
 .mood{ font-size:16px; font-weight:800; }
 .dial .ic{ color:var(--accent); font-weight:800; font-size:14px; }
+.slider{ -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:999px; background:rgba(255,255,255,.16); outline:none; margin-top:10px; }
+.slider::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:26px; height:26px; border-radius:50%; background:#fff; border:2px solid var(--accent); box-shadow:0 2px 9px rgba(0,0,0,.5); cursor:pointer; }
+.slider::-moz-range-thumb{ width:24px; height:24px; border-radius:50%; background:#fff; border:2px solid var(--accent); cursor:pointer; }
+.slabs{ display:flex; justify-content:space-between; margin-top:8px; }
+.slabs span{ font-size:11px; color:var(--muted); font-weight:700; letter-spacing:.6px; text-transform:uppercase; }
 </style>
 </head>
 <body>
@@ -462,7 +467,7 @@ function renderTonight(){
 }
 
 let form = freshForm();
-function freshForm(){ return {type:'Bout night', fuel:'', songs:0, leaks:0, win:'', fix:'', mood:0}; }
+function freshForm(){ return {type:'Bout night', fuel:'', songs:5, leaks:5, win:'', fix:'', mood:0}; }
 function renderLog(){
   const types=['Training','Lesson','Bout night','Rest'];
   const fuels=['Light','OK','Heavy'];
@@ -477,19 +482,13 @@ function renderLog(){
       <label class="fld">How did you fuel?</label>
       <div class="chips" id="fuelChips">${fuels.map(f=>`<div class="chip f-${f} ${form.fuel===f?'sel':''}" data-fuel="${f}">${f}</div>`).join('')}</div>
 
-      <label class="fld">Middle control (0–10) — how well I owned the center</label>
-      <div class="stepper">
-        <button data-step="songs:-1">−</button>
-        <div class="num"><span id="songsN">${form.songs}</span><small>/10</small></div>
-        <button data-step="songs:1">+</button>
-      </div>
+      <label class="fld">Middle control — how well I owned the center</label>
+      <input type="range" class="slider" id="middleSlide" min="0" max="10" value="${form.songs}">
+      <div class="slabs"><span>Bad</span><span>Good</span></div>
 
-      <label class="fld">Times you drifted back (keep low)</label>
-      <div class="stepper">
-        <button data-step="leaks:-1">−</button>
-        <div class="num"><span id="leaksN">${form.leaks}</span></div>
-        <button data-step="leaks:1">+</button>
-      </div>
+      <label class="fld">Held my ground — vs drifting back</label>
+      <input type="range" class="slider" id="groundSlide" min="0" max="10" value="${form.leaks}">
+      <div class="slabs"><span>Bad</span><span>Good</span></div>
 
       <label class="fld">One win</label>
       <textarea id="winT" placeholder="one thing that worked">${form.win}</textarea>
@@ -507,10 +506,8 @@ function renderLog(){
   // handlers
   document.getElementById('typeChips').onclick=e=>{ const t=e.target.dataset.type; if(t){form.type=t; syncChips('typeChips','type',t);} };
   document.getElementById('fuelChips').onclick=e=>{ const f=e.target.dataset.fuel; if(f){form.fuel=f; syncChips('fuelChips','fuel',f);} };
-  document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{
-    const [k,d]=b.dataset.step.split(':'); form[k]=Math.max(0, Math.min(k==='songs'?10:99, form[k]+(+d)));
-    document.getElementById(k+'N').textContent=form[k];
-  });
+  document.getElementById('middleSlide').oninput=e=>form.songs=+e.target.value;
+  document.getElementById('groundSlide').oninput=e=>form.leaks=+e.target.value;
   document.getElementById('moodRow').onclick=e=>{ const m=+e.target.dataset.mood; if(m){form.mood=m;
     document.querySelectorAll('#moodRow .mood').forEach(x=>x.classList.toggle('sel',+x.dataset.mood===m)); } };
   document.getElementById('winT').oninput=e=>form.win=e.target.value;
@@ -527,7 +524,7 @@ function renderRecent(){
       <div class="d">${shortDate(s.date)}</div>
       <div class="em">${MOOD_EM[s.mood]||'·'}</div>
       <div class="meta"><div class="w">${s.win? s.win : '<span style="color:var(--faint)">no note</span>'}</div>
-        <div class="s">${s.type} · middle ${s.songs}/10${s.leaks?` · back ${s.leaks}`:''}</div></div>
+        <div class="s">${s.type} · middle ${s.songs}/10 · ground ${s.leaks}/10</div></div>
     </div>`).join('');
 }
 function saveLog(){
