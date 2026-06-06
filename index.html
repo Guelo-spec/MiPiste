@@ -159,6 +159,45 @@
   nav button .i{font-size:21px;filter:grayscale(1) opacity(.6)}
   nav button.on{color:var(--text)} nav button.on .i{filter:none}
 </style>
+<style id="reskin">
+/* ===== Blue-glass reskin (cinematic sabre) ===== */
+:root{
+  --bg:#0a0f1e;
+  --accent:#2f8cff; --accent-d:#1f6fd6;
+  --gold:#46e0c0; --good:#36e08a;
+}
+html,body{ background:#0a0f1e; }
+body::before{ content:""; position:fixed; inset:0; z-index:-2;
+  background:url('hero1.png') center 12% / cover no-repeat; }
+body::after{ content:""; position:fixed; inset:0; z-index:-1;
+  background:linear-gradient(180deg, rgba(8,11,24,.20) 0%, rgba(9,13,26,.45) 42%, rgba(7,10,20,.84) 84%, #070a14 100%); }
+.app{ background:transparent; }
+/* glassmorphism */
+.card,.pill,.stat,.film,.segctl,.cuechip,.style,.dial,.toy{
+  background:rgba(255,255,255,.07) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(1.4); backdrop-filter:blur(18px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.14);
+}
+.card.hero{ background:rgba(47,140,255,.16) !important; border-color:rgba(47,140,255,.40); }
+.toy{ border:1px dashed rgba(70,224,192,.45); }
+header{ background:rgba(10,14,28,.5) !important; -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); }
+nav{ background:rgba(10,14,28,.62) !important; -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px); }
+.streak{ background:rgba(255,255,255,.10); }
+/* blue accents */
+.brand .bar{ box-shadow:0 0 14px var(--accent); }
+.cue{ box-shadow:0 4px 18px rgba(47,140,255,.5); }
+.btn{ box-shadow:0 8px 24px rgba(47,140,255,.45); }
+.btn.ghost{ box-shadow:none; }
+.chip.sel{ box-shadow:0 4px 14px rgba(47,140,255,.4); }
+.thumb .play{ background:rgba(47,140,255,.92) !important; }
+/* greeting hero */
+.herohero{ position:relative; min-height:340px; margin:-18px -16px 8px; padding:18px 18px 20px; display:flex; align-items:flex-end; background:#0a0f1e url('hero1.png') center 34% / cover no-repeat; }
+.herohero::after{ content:""; position:absolute; inset:0; z-index:0; background:linear-gradient(180deg, rgba(8,11,24,.05) 0%, rgba(8,11,24,.12) 40%, rgba(10,14,28,.80) 86%, #0a0f1e 100%); }
+.greet{ position:relative; z-index:1; padding:0; text-shadow:0 2px 14px rgba(0,0,0,.6); }
+.greet .hi{ font-size:30px; font-weight:850; line-height:1.06; letter-spacing:.3px; }
+.greet .welcome{ font-size:30px; font-weight:850; line-height:1.06; color:#cfe0ff; }
+h2.section, .eyebrow{ text-shadow:0 1px 8px rgba(0,0,0,.45); }
+</style>
 </head>
 <body>
 <div class="app">
@@ -330,6 +369,7 @@ function renderTonight(){
   const opts=SYSTEMS.map(s=>`<option value="${s.key}" ${s.key===state.plan.system?'selected':''}>${s.icon} ${s.name}</option>`).join('');
   const cues=SYSTEMS.filter(s=>s.key!=='middle').map(s=>`<div class="cuechip"><div class="ico">${s.icon}</div><div class="nm">${s.name}</div><div class="cc">${s.cue}</div></div>`).join('');
   document.getElementById('view-tonight').innerHTML = `
+    <div class="herohero"><div class="greet"><div class="hi">Hi Guel,</div><div class="welcome">Welcome back 🤺</div></div></div>
     <div class="card hero">
       <div class="eyebrow">🎯 Tonight's plan</div>
       <div class="focus-title">${sys.icon} ${sys.name}</div>
