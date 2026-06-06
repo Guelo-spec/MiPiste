@@ -168,7 +168,7 @@
 }
 html,body{ background:#0a0f1e; }
 body::before{ content:""; position:fixed; inset:0; z-index:-2;
-  background-image:var(--hero,url('hero1.png')); background-size:cover; background-position:center 12%; background-repeat:no-repeat; }
+  background-image:var(--hero,url('ph4.jpg')); background-size:cover; background-position:center 12%; background-repeat:no-repeat; }
 body::after{ content:""; position:fixed; inset:0; z-index:-1;
   background:linear-gradient(180deg, rgba(8,11,24,.20) 0%, rgba(9,13,26,.45) 42%, rgba(7,10,20,.84) 84%, #070a14 100%); }
 .app{ background:transparent; }
@@ -191,13 +191,18 @@ nav{ background:rgba(10,14,28,.62) !important; -webkit-backdrop-filter:blur(18px
 .chip.sel{ box-shadow:0 4px 14px rgba(47,140,255,.4); }
 .thumb .play{ background:rgba(47,140,255,.92) !important; }
 /* greeting hero */
-.herohero{ position:relative; min-height:340px; margin:-18px -16px 8px; padding:18px 18px 20px; display:flex; align-items:flex-end; background-color:#0a0f1e; background-image:var(--hero,url('hero1.png')); background-size:cover; background-position:center 34%; background-repeat:no-repeat; }
+.herohero{ position:relative; min-height:340px; margin:-18px -16px 8px; padding:18px 18px 20px; display:flex; align-items:flex-end; background-color:#0a0f1e; background-image:var(--hero,url('ph4.jpg')); background-size:cover; background-position:center 34%; background-repeat:no-repeat; }
 .heroedit{ position:absolute; top:16px; right:16px; z-index:2; width:38px; height:38px; border-radius:50%; border:1px solid rgba(255,255,255,.25); background:rgba(10,14,28,.5); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); color:#fff; font-size:15px; cursor:pointer; }
 .herohero::after{ content:""; position:absolute; inset:0; z-index:0; background:linear-gradient(180deg, rgba(8,11,24,.05) 0%, rgba(8,11,24,.12) 40%, rgba(10,14,28,.80) 86%, #0a0f1e 100%); }
 .greet{ position:relative; z-index:1; padding:0; text-shadow:0 2px 14px rgba(0,0,0,.6); }
 .greet .hi{ font-size:30px; font-weight:850; line-height:1.06; letter-spacing:.3px; }
 .greet .welcome{ font-size:30px; font-weight:850; line-height:1.06; color:#cfe0ff; }
 h2.section, .eyebrow{ text-shadow:0 1px 8px rgba(0,0,0,.45); }
+.vhero{ position:relative; height:182px; margin:-18px -16px 14px; background-size:cover; background-repeat:no-repeat; display:flex; align-items:flex-end; }
+.vhsh{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(8,11,24,.12) 0%, rgba(8,11,24,.5) 55%, #0a0f1e 100%); }
+.vhcap{ position:relative; z-index:1; padding:14px 18px; }
+.vhk{ font-size:11px; letter-spacing:2px; font-weight:800; color:#9cc2ff; text-transform:uppercase; text-shadow:0 1px 8px rgba(0,0,0,.6); }
+.vht{ font-size:22px; font-weight:850; text-shadow:0 2px 10px rgba(0,0,0,.6); line-height:1.1; }
 </style>
 </head>
 <body>
@@ -365,6 +370,9 @@ function barChart(values, opts){
 const moodColor = v => v>=4?'var(--good)': v>=3?'var(--warn)':'var(--bad)';
 
 /* ---------- Renderers ---------- */
+function viewHero(img, pos, kicker, title){
+  return `<div class="vhero" style="background-image:url('${img}');background-position:${pos||'center'}"><div class="vhsh"></div><div class="vhcap"><div class="vhk">${kicker}</div><div class="vht">${title}</div></div></div>`;
+}
 function renderTonight(){
   const sys=sysByKey(state.plan.system);
   const opts=SYSTEMS.map(s=>`<option value="${s.key}" ${s.key===state.plan.system?'selected':''}>${s.icon} ${s.name}</option>`).join('');
@@ -420,6 +428,7 @@ function renderLog(){
   const fuels=['Light','OK','Heavy'];
   const moods=[1,2,3,4,5].map(m=>`<div class="mood ${form.mood===m?'sel':''}" data-mood="${m}">${MOOD_EM[m]}</div>`).join('');
   document.getElementById('view-log').innerHTML=`
+    ${viewHero('ph3.jpg','center 25%','After Training','Log your session')}
     <div class="card">
       <div class="eyebrow">✍️ Log session — ${shortDate(todayKey())}</div>
       <label class="fld">Session type</label>
@@ -499,6 +508,7 @@ function renderProgress(){
   const moods=recent(14).map(x=>x.mood);
   const songs=recent(14).map(x=>x.songs);
   document.getElementById('view-progress').innerHTML=`
+    ${viewHero('ph2.jpg','center 30%','Your Climb','Progress')}
     <div class="stats">
       <div class="stat"><div class="v gold">🔥 ${currentStreak()}</div><div class="l">Current streak</div></div>
       <div class="stat"><div class="v">${s.length}</div><div class="l">Total sessions</div></div>
@@ -556,7 +566,7 @@ function renderFilm(){
   const seg=[['videos','🎬 Videos'],['clips','✂️ Clips'],['footage','📹 Footage']];
   const segHtml=seg.map(s=>`<div class="seg ${filmView===s[0]?'on':''}" data-filmview="${s[0]}">${s[1]}</div>`).join('');
   const body = filmView==='clips'?clipsBody() : filmView==='footage'?footageBody() : videosBody();
-  document.getElementById('view-film').innerHTML=`<div class="segctl">${segHtml}</div>${body}`;
+  document.getElementById('view-film').innerHTML=`${viewHero('ph1.jpg','center 45%','Film Room','Study the game')}<div class="segctl">${segHtml}</div>${body}`;
   document.querySelector('.segctl').onclick=e=>{const v=e.target.dataset.filmview; if(v){filmView=v; renderFilm(); window.scrollTo(0,0);}};
   if(filmView==='clips') wireClips(); else if(filmView==='footage') wireFootage(); else wireVideos();
 }
@@ -756,6 +766,7 @@ function renderPlaybook(){
   const ars=ARSENAL.map(a=>`<li><b>${a[0]}</b> — ${a[1]}</li>`).join('');
   const tbox=TOOLBOX.map(g=>`<div class="tgroup"><h4>${g[0]}</h4>${g[1].map(t=>`<div class="trow"><b>${t[0]}</b><span>${t[1]}</span></div>`).join('')}</div>`).join('');
   document.getElementById('view-playbook').innerHTML=`
+    ${viewHero('hero1.png','center 25%','The Game','Playbook')}
     <div class="card hero">
       <div class="eyebrow">🗺️ The one question</div>
       <div class="focus-title" style="font-size:21px">Who commits — and when?</div>
