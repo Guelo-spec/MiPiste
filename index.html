@@ -211,13 +211,17 @@ h2.section, .eyebrow{ text-shadow:0 1px 8px rgba(0,0,0,.45); }
 .gauge{ width:100%; max-width:280px; display:block; margin:6px auto 0; }
 .gbig{ fill:#fff; font-size:30px; font-weight:850; text-anchor:middle; }
 .gsub{ fill:#9aa6bd; font-size:11px; font-weight:700; text-anchor:middle; letter-spacing:1px; }
+nav button .i svg{ width:24px; height:24px; display:block; margin:0 auto; }
+.sc-ic svg{ width:23px; height:23px; color:var(--accent); }
+.mood{ font-size:16px; font-weight:800; }
+.dial .ic{ color:var(--accent); font-weight:800; font-size:14px; }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div class="brand"><span class="bar"></span><div><h1>PISTE</h1><small>GUEL · SABRE</small></div></div>
-    <div class="streak">🔥 <span class="n" id="streakN">0</span>&nbsp;day</div>
+    <div class="streak"><svg style="width:14px;height:14px;color:var(--gold);margin-right:4px;vertical-align:-2px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c2.5 3.5 4.5 5 4.5 8.5a4.5 4.5 0 1 1-9 0c0-2 1-3.5 2.5-4.5 0 1.5 1 2 2 2 0-3-2-4 0-6z"/></svg><span class="n" id="streakN">0</span>&nbsp;day</div>
   </header>
 
   <main>
@@ -234,11 +238,11 @@ h2.section, .eyebrow{ text-shadow:0 1px 8px rgba(0,0,0,.45); }
   </main>
 
   <nav>
-    <button data-tab="tonight" class="on"><span class="i">🎯</span>Tonight</button>
-    <button data-tab="log"><span class="i">✍️</span>Log</button>
-    <button data-tab="film"><span class="i">🎥</span>Film</button>
-    <button data-tab="progress"><span class="i">📈</span>Progress</button>
-    <button data-tab="playbook"><span class="i">📖</span>Playbook</button>
+    <button data-tab="tonight" class="on"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4"/></svg></span>Tonight</button>
+    <button data-tab="log"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4.5-1.2L20 7.3a2 2 0 0 0-2.8-2.8L5.7 15.5 4 20z"/><path d="M14.5 6.5l3 3"/></svg></span>Log</button>
+    <button data-tab="film"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10.5 9.2l4.5 2.8-4.5 2.8z"/></svg></span>Film</button>
+    <button data-tab="progress"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19V12M12 19V6M19 19v-4"/></svg></span>Progress</button>
+    <button data-tab="playbook"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h10a2 2 0 0 1 2 2V20H7a2 2 0 0 1-2-2V4.5z"/><path d="M5 17h12"/></svg></span>Playbook</button>
   </nav>
 </div>
 <div class="toast" id="toast"></div>
@@ -246,32 +250,32 @@ h2.section, .eyebrow{ text-shadow:0 1px 8px rgba(0,0,0,.45); }
 <script>
 /* ---------- Pre-loaded with Guel's game ---------- */
 const SYSTEMS = [
-  {key:'mindset', icon:'🧠', name:'Mindset',          cue:'Stand & plan',          note:'relaxed · a plan ready · confidence'},
-  {key:'middle',  icon:'🟢', name:'Own the middle',    cue:'Plant ▸ vary ▸ finish', note:"7/10 from here — don't drift back, it flips priority"},
-  {key:'tempo',   icon:'👣', name:'Tempo & footwork',  cue:'Change the song',       note:'watch their feet · vary rhythm · kill the bounce'},
-  {key:'distance',icon:'📏', name:'Distance',          cue:'Invite, then vanish',   note:'make their attack fall short → riposte'},
-  {key:'blade',   icon:'⚔️', name:'Blade & priority',  cue:'Take the line, then go', note:'win right-of-way, then finish'},
-  {key:'defense', icon:'🛡️', name:'Defense',           cue:'Parry last',            note:'parry at the last instant — no early opens'},
+  {key:'mindset', name:'Mindset',          cue:'Stand & plan',          note:'relaxed · a plan ready · confidence'},
+  {key:'middle',  name:'Own the middle',   cue:'Plant ▸ vary ▸ finish', note:"7/10 from here — don't drift back, it flips priority"},
+  {key:'tempo',   name:'Tempo & footwork', cue:'Change the song',       note:'watch their feet · vary rhythm · kill the bounce'},
+  {key:'distance',name:'Distance',         cue:'Invite, then vanish',   note:'make their attack fall short → riposte'},
+  {key:'blade',   name:'Blade & priority', cue:'Take the line, then go', note:'win right-of-way, then finish'},
+  {key:'defense', name:'Defense',          cue:'Parry last',            note:'parry at the last instant — no early opens'},
 ];
 const sysByKey = k => SYSTEMS.find(s=>s.key===k) || SYSTEMS[1];
 
 const SONGS = [
-  ['🚀 Gear-Change 🇰🇷','controlled… then VIOLENT acceleration, last 2 steps','react too late — done before the parry'],
-  ['🥁 The Stutter','even cadence → sudden hitch → go','breaks timing — freeze or early commit'],
-  ['⏸️ False Stop','march, then FULL freeze (look done)','they relax / attack the stop → parry-riposte'],
-  ['🤜 Press & Release','crush distance, then a small give','pulls them onto your prepared counter'],
-  ['📐 Step-Length Lie','same speed: big–big–SMALL–explode','misjudge distance — in range too soon'],
-  ['🐌 Slow Bait 🇫🇷','deliberately slow, readable prep','tempts attack-on-prep → you punish it'],
-  ['🎺 Crescendo','slow → build → faster → EXPLODE (smooth accel)','they keep ceding ground, then commit late or run out of strip'],
-  ['🌗 The Decel','speed up… then suddenly SLOW','they brace for the attack early → you punish the freeze'],
-  ['🦶 The Appel','stamp the front foot mid-prep','draws a flinch / early parry → go around it'],
-  ['🪀 The Yo-Yo','give ground, give ground, then EXPLODE forward','they follow & relax → caught by the reversal'],
-  ['🩰 Half-Step','tiny non-committal half-advance','reveals their answer (parry? counter?) at zero risk'],
+  ['Gear-Change (Korea)','controlled… then VIOLENT acceleration, last 2 steps','react too late — done before the parry'],
+  ['The Stutter','even cadence → sudden hitch → go','breaks timing — freeze or early commit'],
+  ['False Stop','march, then FULL freeze (look done)','they relax / attack the stop → parry-riposte'],
+  ['Press & Release','crush distance, then a small give','pulls them onto your prepared counter'],
+  ['Step-Length Lie','same speed: big–big–SMALL–explode','misjudge distance — in range too soon'],
+  ['Slow Bait (France)','deliberately slow, readable prep','tempts attack-on-prep → you punish it'],
+  ['Crescendo','slow → build → faster → EXPLODE (smooth accel)','they keep ceding ground, then commit late or run out of strip'],
+  ['The Decel','speed up… then suddenly SLOW','they brace for the attack early → you punish the freeze'],
+  ['The Appel','stamp the front foot mid-prep','draws a flinch / early parry → go around it'],
+  ['The Yo-Yo','give ground, give ground, then EXPLODE forward','they follow & relax — caught by the reversal'],
+  ['Half-Step','tiny non-committal half-advance','reveals their answer (parry? counter?) at zero risk'],
 ];
 const DIALS = [
-  ['🎚️','Tempo','how FAST the feet move'],
-  ['🥁','Rhythm','the PATTERN — even vs broken'],
-  ['📏','Distance','how much GROUND each step eats'],
+  ['01','Tempo','how FAST the feet move'],
+  ['02','Rhythm','the PATTERN — even vs broken'],
+  ['03','Distance','how much GROUND each step eats'],
 ];
 const READ = [
   ['charges forward','Presser','Pull distance → riposte · Point-in-line · or beat him with attack-on-prep'],
@@ -286,19 +290,19 @@ const READ = [
   ['bounces in a steady rhythm','Metronome','Break it — stutter / false stop → attack the freeze'],
 ];
 const TOOLBOX = [
-  ['⚔️ Attack — you go first', [
+  ['Attack — you go first', [
     ['Simple attack','flat-footed / you have distance — straight & fast'],
     ['Attack on prep','they step or prep slowly → explode as they move'],
     ['Feint (one-two)','they parry early → fake one line, finish the other'],
     ['Beat / take-the-blade','their arm or point is out → clear it, then go'],
   ]],
-  ['🛡️ Defend — let them come', [
+  ['Defend — let them come', [
     ['Parry-riposte (LATE)','real committed attack → 4/3/5, take blade, hit back'],
     ['Pull distance','they over-reach → make it fall short → riposte'],
     ['Point-in-line','they rush in → arm straight, they must clear it first'],
     ['Stop-cut to the arm','slow / wide prep → counter into it (mind priority)'],
   ]],
-  ['🪤 Trap — make them bite', [
+  ['Trap — make them bite', [
     ['Second intention','short attack to draw their answer → parry-riposte THAT'],
     ['March + pull','pressure in → sudden stop → punish the reaction'],
     ['Remise','attack parried? instantly re-hit — never admire the miss'],
@@ -356,7 +360,7 @@ function bestStreak(){
   }
   return best;
 }
-const MOOD_EM=['','😞','😕','😐','🙂','😄'];
+const MOOD_EM=['','1','2','3','4','5'];
 function recent(n){ return state.sessions.slice(-n); }
 function avg(arr){ return arr.length? (arr.reduce((a,b)=>a+b,0)/arr.length):0; }
 
@@ -378,6 +382,13 @@ function barChart(values, opts){
 const moodColor = v => v>=4?'var(--good)': v>=3?'var(--warn)':'var(--bad)';
 
 /* ---------- Renderers ---------- */
+const SVGA='viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"';
+const IC={
+  flame:`<svg ${SVGA}><path d="M12 3c2.5 3.5 4.5 5 4.5 8.5a4.5 4.5 0 1 1-9 0c0-2 1-3.5 2.5-4.5 0 1.5 1 2 2 2 0-3-2-4 0-6z"/></svg>`,
+  person:`<svg ${SVGA}><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c0-3.6 2.9-5.6 6.5-5.6s6.5 2 6.5 5.6"/></svg>`,
+  shield:`<svg ${SVGA}><path d="M12 3.2l7 2.6v4.8c0 4.8-3 7.8-7 9.6-4-1.8-7-4.8-7-9.6V5.8l7-2.6z"/></svg>`,
+  smile:`<svg ${SVGA}><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14.2c1 1.2 2.2 1.8 3.5 1.8s2.5-.6 3.5-1.8"/><path d="M9.3 9.9h.01M14.7 9.9h.01"/></svg>`,
+};
 function viewHero(img, pos, kicker, title){
   return `<div class="vhero" style="background-image:url('${img}');background-position:${pos||'center'}"><div class="vhsh"></div><div class="vhcap"><div class="vhk">${kicker}</div><div class="vht">${title}</div></div></div>`;
 }
@@ -393,40 +404,40 @@ function gauge(pct,big,sub){
 }
 function renderTonight(){
   const sys=sysByKey(state.plan.system);
-  const opts=SYSTEMS.map(s=>`<option value="${s.key}" ${s.key===state.plan.system?'selected':''}>${s.icon} ${s.name}</option>`).join('');
-  const cues=SYSTEMS.filter(s=>s.key!=='middle').map(s=>`<div class="cuechip"><div class="ico">${s.icon}</div><div class="nm">${s.name}</div><div class="cc">${s.cue}</div></div>`).join('');
+  const opts=SYSTEMS.map(s=>`<option value="${s.key}" ${s.key===state.plan.system?'selected':''}>${s.name}</option>`).join('');
+  const cues=SYSTEMS.filter(s=>s.key!=='middle').map(s=>`<div class="cuechip"><div class="nm">${s.name}</div><div class="cc">${s.cue}</div></div>`).join('');
   document.getElementById('view-tonight').innerHTML = `
-    <div class="herohero"><button class="heroedit" id="heroEditBtn" title="Change hero image">✎</button><input type="file" id="heroFile" accept="image/*" style="display:none"/><div class="greet"><div class="hi">Hi Guel,</div><div class="welcome">Welcome back 🤺</div></div></div>
+    <div class="herohero"><button class="heroedit" id="heroEditBtn" title="Change hero image"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4.5-1.2L20 7.3a2 2 0 0 0-2.8-2.8L5.7 15.5 4 20z"/><path d="M14.5 6.5l3 3"/></svg></button><input type="file" id="heroFile" accept="image/*" style="display:none"/><div class="greet"><div class="hi">Hi Guel,</div><div class="welcome">Welcome back</div></div></div>
     <h2 class="section">My Sabre</h2>
     <div class="card">
-      <div class="eyebrow">📊 This week</div>
+      <div class="eyebrow">This week</div>
       <div class="statrow">
-        ${statCirc('🔥', currentStreak(), 'streak')}
-        ${statCirc('🤺', state.sessions.length, 'sessions')}
-        ${statCirc('🎵', (avg(recent(7).map(x=>x.songs))||0).toFixed(1), 'songs')}
-        ${statCirc('😊', avg(recent(7).map(x=>x.mood)) ? avg(recent(7).map(x=>x.mood)).toFixed(1) : '—', 'mood')}
+        ${statCirc(IC.flame, currentStreak(), 'streak')}
+        ${statCirc(IC.person, state.sessions.length, 'sessions')}
+        ${statCirc(IC.shield, (avg(recent(7).map(x=>x.songs))||0).toFixed(1), 'middle')}
+        ${statCirc(IC.smile, avg(recent(7).map(x=>x.mood)) ? avg(recent(7).map(x=>x.mood)).toFixed(1) : '—', 'mood')}
       </div>
     </div>
     <h2 class="section">Tonight</h2>
     <div class="card hero">
-      <div class="eyebrow">🎯 Tonight's plan</div>
-      <div class="focus-title">${sys.icon} ${sys.name}</div>
+      <div class="eyebrow">Tonight's plan</div>
+      <div class="focus-title">${sys.name}</div>
       <span class="cue">${sys.cue}</span>
       <p style="color:var(--muted);font-size:14px;margin:12px 0 0;line-height:1.45">${sys.note}</p>
       <div class="toy">
-        <div class="lab">🎬 One new toy to test</div>
+        <div class="lab">One new toy to test</div>
         <div class="name">${state.plan.toy||'—'}</div>
         <div class="desc">${state.plan.toyDesc||''}</div>
       </div>
       <div class="reminders">
-        <div class="pill"><div class="t">⛽ FUEL</div><div class="v">Light, not loaded</div></div>
-        <div class="pill"><div class="t">🧠 MIND</div><div class="v">Stand · plan · relaxed</div></div>
+        <div class="pill"><div class="t">FUEL</div><div class="v">Light, not loaded</div></div>
+        <div class="pill"><div class="t">MIND</div><div class="v">Stand · plan · relaxed</div></div>
       </div>
       <div class="mantra">"${MANTRA}"</div>
     </div>
 
     <div class="card">
-      <div class="eyebrow">⚙️ Set tonight's focus</div>
+      <div class="eyebrow">Set tonight's focus</div>
       <label class="fld">Today's ONE system</label>
       <select id="planSys">${opts}</select>
       <label class="fld">One new toy</label>
@@ -443,11 +454,11 @@ function renderTonight(){
   document.getElementById('savePlan').onclick=()=>{
     state.plan.toy=document.getElementById('planToy').value.trim();
     state.plan.toyDesc=document.getElementById('planToyDesc').value.trim();
-    save(); renderTonight(); toast('Plan loaded. Go to work. 🤺');
+    save(); renderTonight(); toast('Plan loaded. Go to work.');
   };
   document.getElementById('goLog').onclick=()=>switchTab('log');
   const heroBtn=document.getElementById('heroEditBtn'), heroFile=document.getElementById('heroFile');
-  if(heroBtn){ heroBtn.onclick=()=>heroFile.click(); heroFile.onchange=async()=>{ const f=heroFile.files[0]; if(!f) return; try{ await idbPut('hero_img', f); await applyHero(); toast('Hero image set 🤺'); }catch(e){ toast('Could not set that image'); } }; }
+  if(heroBtn){ heroBtn.onclick=()=>heroFile.click(); heroFile.onchange=async()=>{ const f=heroFile.files[0]; if(!f) return; try{ await idbPut('hero_img', f); await applyHero(); toast('Hero image set'); }catch(e){ toast('Could not set that image'); } }; }
 }
 
 let form = freshForm();
@@ -459,33 +470,33 @@ function renderLog(){
   document.getElementById('view-log').innerHTML=`
     ${viewHero('ph3.jpg','center 25%','After Training','Log your session')}
     <div class="card">
-      <div class="eyebrow">✍️ Log session — ${shortDate(todayKey())}</div>
+      <div class="eyebrow">Log session — ${shortDate(todayKey())}</div>
       <label class="fld">Session type</label>
       <div class="chips" id="typeChips">${types.map(t=>`<div class="chip ${form.type===t?'sel':''}" data-type="${t}">${t}</div>`).join('')}</div>
 
-      <label class="fld">⛽ How did you fuel?</label>
+      <label class="fld">How did you fuel?</label>
       <div class="chips" id="fuelChips">${fuels.map(f=>`<div class="chip f-${f} ${form.fuel===f?'sel':''}" data-fuel="${f}">${f}</div>`).join('')}</div>
 
-      <label class="fld">🎵 Songs changed (out of 10) — the real score</label>
+      <label class="fld">Middle control (0–10) — how well I owned the center</label>
       <div class="stepper">
         <button data-step="songs:-1">−</button>
         <div class="num"><span id="songsN">${form.songs}</span><small>/10</small></div>
         <button data-step="songs:1">+</button>
       </div>
 
-      <label class="fld">⬅️ Times you leaked backward (keep low)</label>
+      <label class="fld">Times you drifted back (keep low)</label>
       <div class="stepper">
         <button data-step="leaks:-1">−</button>
         <div class="num"><span id="leaksN">${form.leaks}</span></div>
         <button data-step="leaks:1">+</button>
       </div>
 
-      <label class="fld">✅ One win</label>
+      <label class="fld">One win</label>
       <textarea id="winT" placeholder="one thing that worked">${form.win}</textarea>
-      <label class="fld">🔧 One fix → next session</label>
+      <label class="fld">One fix → next session</label>
       <textarea id="fixT" placeholder="one thing to sharpen">${form.fix}</textarea>
 
-      <label class="fld">🧠 Mood</label>
+      <label class="fld">Mood (1–5)</label>
       <div class="moods" id="moodRow">${moods}</div>
 
       <button class="btn" id="saveLog">Save session</button>
@@ -516,16 +527,16 @@ function renderRecent(){
       <div class="d">${shortDate(s.date)}</div>
       <div class="em">${MOOD_EM[s.mood]||'·'}</div>
       <div class="meta"><div class="w">${s.win? s.win : '<span style="color:var(--faint)">no note</span>'}</div>
-        <div class="s">${s.type} · 🎵 ${s.songs}/10${s.leaks?` · ⬅️ ${s.leaks}`:''}</div></div>
+        <div class="s">${s.type} · middle ${s.songs}/10${s.leaks?` · back ${s.leaks}`:''}</div></div>
     </div>`).join('');
 }
 function saveLog(){
-  if(!form.mood){ toast('Tap a mood first 🙂'); return; }
+  if(!form.mood){ toast('Tap a mood first'); return; }
   const entry={date:todayKey(), type:form.type, fuel:form.fuel, songs:form.songs, leaks:form.leaks, win:form.win.trim(), fix:form.fix.trim(), mood:form.mood, ts:Date.now()};
   state.sessions.push(entry); save();
-  const msg = form.songs>=8 ? `Elite. ${form.songs} songs changed — the scoreboard is noise. 🔥`
-            : form.songs>=5 ? `Logged. ${form.songs} songs — process over scoreboard. 💪`
-            : `Logged. Honest reps build the streak. Tomorrow, change one more song.`;
+  const msg = form.songs>=8 ? `Elite. ${form.songs}/10 middle control — you owned the center.`
+            : form.songs>=5 ? `Logged. ${form.songs}/10 middle — hold the ground, the points follow.`
+            : `Logged. Honest reps build the streak. Plant the middle next time.`;
   form=freshForm(); updateStreak(); renderLog(); toast(msg);
 }
 
@@ -539,32 +550,32 @@ function renderProgress(){
   document.getElementById('view-progress').innerHTML=`
     ${viewHero('ph2.jpg','center 30%','Your Climb','Progress')}
     <div class="card" style="text-align:center">
-      <div class="eyebrow" style="justify-content:center">🎯 This week</div>
+      <div class="eyebrow" style="justify-content:center">This week</div>
       ${gauge(Math.min(100,Math.round(weekCount()/4*100)), Math.min(100,Math.round(weekCount()/4*100))+'%', weekCount()+' / 4 sessions')}
     </div>
     <div class="stats">
-      <div class="stat"><div class="v gold">🔥 ${currentStreak()}</div><div class="l">Current streak</div></div>
+      <div class="stat"><div class="v gold">${currentStreak()}</div><div class="l">Current streak</div></div>
       <div class="stat"><div class="v">${s.length}</div><div class="l">Total sessions</div></div>
-      <div class="stat"><div class="v acc">${songAvg.toFixed(1)}</div><div class="l">Avg songs (last 7)</div></div>
+      <div class="stat"><div class="v acc">${songAvg.toFixed(1)}</div><div class="l">Avg middle (last 7)</div></div>
       <div class="stat"><div class="v good">${moodAvg? moodAvg.toFixed(1):'—'}</div><div class="l">Avg mood (last 7)</div></div>
     </div>
     <div class="card" style="margin-top:14px">
-      <div class="chartwrap"><div class="cap">😊 Mood — last 14</div>${barChart(moods,{max:5,color:moodColor})}</div>
+      <div class="chartwrap"><div class="cap">Mood — last 14</div>${barChart(moods,{max:5,color:moodColor})}</div>
     </div>
     <div class="card">
-      <div class="chartwrap"><div class="cap">🎵 Songs changed — last 14</div>${barChart(songs,{max:10})}</div>
+      <div class="chartwrap"><div class="cap">Middle control — last 14</div>${barChart(songs,{max:10})}</div>
     </div>
     <div class="card">
-      <div class="eyebrow">📌 The point</div>
-      <p style="font-size:14px;color:var(--muted);line-height:1.5;margin:0">You can't control the scoreboard. You can control the songs and the streak. Watch <b style="color:var(--text)">those</b> bars climb — that's you getting better, win or lose.</p>
+      <div class="eyebrow">The point</div>
+      <p style="font-size:14px;color:var(--muted);line-height:1.5;margin:0">You can't control the scoreboard. You can control your middle and the streak. Watch <b style="color:var(--text)">those</b> bars climb — that's you getting better, win or lose.</p>
       <p style="font-size:13px;color:var(--faint);margin:12px 0 0">Best streak: <b style="color:var(--gold)">${bestStreak()} days</b></p>
     </div>
     <div class="card">
-      <div class="eyebrow">💾 Your data (Phase-1 sync)</div>
+      <div class="eyebrow">Your data</div>
       <p class="note" style="margin-top:0">Back up or move your data between devices until auto-sync lands.</p>
       <div class="datarow">
-        <button class="btn sm ghost" id="exportBtn">⬇️ Export</button>
-        <button class="btn sm ghost" id="importBtn">⬆️ Import</button>
+        <button class="btn sm ghost" id="exportBtn">Export</button>
+        <button class="btn sm ghost" id="importBtn">Import</button>
       </div>
       <input type="file" id="importFile" accept="application/json" style="display:none"/>
     </div>
@@ -596,7 +607,7 @@ async function idbDel(k){ const db=await idb(); return new Promise((res,rej)=>{ 
 
 function renderFilm(){
   stopClipLoop();
-  const seg=[['videos','🎬 Videos'],['clips','✂️ Clips'],['footage','📹 Footage']];
+  const seg=[['videos','Videos'],['clips','Clips'],['footage','Footage']];
   const segHtml=seg.map(s=>`<div class="seg ${filmView===s[0]?'on':''}" data-filmview="${s[0]}">${s[1]}</div>`).join('');
   const body = filmView==='clips'?clipsBody() : filmView==='footage'?footageBody() : videosBody();
   document.getElementById('view-film').innerHTML=`${viewHero('ph1.jpg','center 45%','Film Room','Study the game')}<div class="segctl">${segHtml}</div>${body}`;
@@ -619,15 +630,15 @@ function videosBody(){
         <div class="ftag">${f.tag}</div>
         <div class="factions">
           <a href="${escapeAttr(f.url)}" target="_blank" rel="noopener">Open ↗</a>
-          <button data-clipfrom="${f.id}" class="goldbtn">✂️ Clip</button>
+          <button data-clipfrom="${f.id}" class="goldbtn">Clip</button>
           <button data-del="${f.id}">Remove</button>
         </div>
       </div>
     </div>`).join('')
-    : `<div class="empty">No videos yet.<br/><br/>Save bouts from <b style="color:var(--text)">Oh Sang-uk</b>, <b style="color:var(--text)">Gu Bon-gil</b>, <b style="color:var(--text)">Apithy-Brunet</b> — and your own. 🎥</div>`;
+    : `<div class="empty">No videos yet.<br/><br/>Save bouts from <b style="color:var(--text)">Oh Sang-uk</b>, <b style="color:var(--text)">Gu Bon-gil</b>, <b style="color:var(--text)">Apithy-Brunet</b> — and your own.</div>`;
   return `
     <div class="card">
-      <div class="eyebrow">🎬 Add a video</div>
+      <div class="eyebrow">Add a video</div>
       <input type="text" id="filmUrl" placeholder="Paste a YouTube link" value="${escapeAttr(filmDraft.url)}"/>
       <input type="text" id="filmTitle" placeholder="Label (optional)" value="${escapeAttr(filmDraft.title)}" style="margin-top:8px"/>
       <label class="fld">Tag</label>
@@ -645,13 +656,13 @@ function wireVideos(){
   document.getElementById('filmFilterChips').onclick=e=>{const t=e.target.dataset.filmfilter; if(t){filmFilter=t; renderFilm();}};
   document.querySelectorAll('[data-play]').forEach(el=>el.onclick=()=>playFilm(el.dataset.play));
   document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ state.films=state.films.filter(x=>x.id!==b.dataset.del); save(); renderFilm(); toast('Video removed'); });
-  document.querySelectorAll('[data-clipfrom]').forEach(b=>b.onclick=()=>{ const f=state.films.find(x=>x.id===b.dataset.clipfrom); clipDraft={url:f?f.url:'',start:'',end:'',label:f?f.title:'',tag:f?f.tag:'Technique'}; filmView='clips'; renderFilm(); window.scrollTo(0,0); toast('Set start & end ✂️'); });
+  document.querySelectorAll('[data-clipfrom]').forEach(b=>b.onclick=()=>{ const f=state.films.find(x=>x.id===b.dataset.clipfrom); clipDraft={url:f?f.url:'',start:'',end:'',label:f?f.title:'',tag:f?f.tag:'Technique'}; filmView='clips'; renderFilm(); window.scrollTo(0,0); toast('Set start & end'); });
 }
 function addFilm(){
   const id=ytId(filmDraft.url);
   if(!id){ toast("Hmm — that doesn't look like a YouTube link"); return; }
   state.films.push({id, url:filmDraft.url.trim(), title:filmDraft.title.trim(), tag:filmDraft.tag, ts:Date.now()});
-  save(); filmDraft={url:'',title:'',tag:filmDraft.tag}; renderFilm(); toast('Video saved 🎬');
+  save(); filmDraft={url:'',title:'',tag:filmDraft.tag}; renderFilm(); toast('Video saved');
 }
 function playFilm(id){
   const thumb=document.querySelector('.film[data-id="'+id+'"] .thumb'); if(!thumb) return;
@@ -672,10 +683,10 @@ function clipsBody(){
         <div class="factions"><button data-delclip="${c.id}">Remove</button></div>
       </div>
     </div>`).join('')
-    : `<div class="empty">No clips yet.<br/><br/>Find a moment worth studying — drop the link + the times (e.g. <b style="color:var(--text)">1:02</b> to <b style="color:var(--text)">1:30</b>) and it replays just that. ✂️</div>`;
+    : `<div class="empty">No clips yet.<br/><br/>Find a moment worth studying — drop the link + the times (e.g. <b style="color:var(--text)">1:02</b> to <b style="color:var(--text)">1:30</b>) and it replays just that.</div>`;
   return `
     <div class="card">
-      <div class="eyebrow">✂️ Clip a moment</div>
+      <div class="eyebrow">Clip a moment</div>
       <input type="text" id="clipUrl" placeholder="YouTube link" value="${escapeAttr(clipDraft.url)}"/>
       <div class="timerow">
         <div><label class="fld">Start</label><input type="text" id="clipStart" placeholder="1:02" value="${escapeAttr(clipDraft.start)}"/></div>
@@ -685,7 +696,7 @@ function clipsBody(){
       <input type="text" id="clipLabel" placeholder="e.g. perfect attack-on-prep timing" value="${escapeAttr(clipDraft.label)}"/>
       <label class="fld">Tag</label>
       <div class="chips" id="clipTagChips">${tagChips}</div>
-      <button class="btn sm" id="addClip" style="margin-top:14px">Save clip ✂️</button>
+      <button class="btn sm" id="addClip" style="margin-top:14px">Save clip</button>
     </div>
     <div class="filmgrid">${cards}</div>`;
 }
@@ -706,7 +717,7 @@ function addClip(){
   if(s==null||e==null){ toast('Enter start & end like 1:02 and 1:30'); return; }
   if(e<=s){ toast('End must be after start'); return; }
   state.clips.push({id:uid(), vid, start:s, end:e, label:clipDraft.label.trim(), tag:clipDraft.tag, ts:Date.now()});
-  save(); clipDraft={url:'',start:'',end:'',label:'',tag:clipDraft.tag}; renderFilm(); toast('Clip saved ✂️');
+  save(); clipDraft={url:'',start:'',end:'',label:'',tag:clipDraft.tag}; renderFilm(); toast('Clip saved');
 }
 /* YouTube IFrame API — used to LOOP a clip's exact segment */
 let _ytReady=false, _ytLoading=false, _ytWaiters=[];
@@ -755,7 +766,7 @@ function footageBody(){
   const ups=state.uploads.slice().reverse();
   const cards = ups.length ? ups.map(u=>`
     <div class="film" data-uid="${u.id}">
-      <div class="thumb foot" data-playfoot="${u.id}"><div class="footicon">📹</div><div class="play">▶</div></div>
+      <div class="thumb foot" data-playfoot="${u.id}"><div class="footicon"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10.5 9.2l4.5 2.8-4.5 2.8z"/></svg></div><div class="play">▶</div></div>
       <div class="finfo">
         <input class="labinp" data-lab="${u.id}" value="${escapeAttr(u.label)}" placeholder="Label this clip"/>
         <div class="chips" style="margin-top:8px">${FOOT_TAGS.map(t=>`<div class="chip mini ${u.tag===t?'sel':''}" data-foottag="${u.id}|${t}">${t}</div>`).join('')}</div>
@@ -763,10 +774,10 @@ function footageBody(){
         <div class="factions"><button data-delfoot="${u.id}">Remove</button></div>
       </div>
     </div>`).join('')
-    : `<div class="empty">No footage yet.<br/><br/>Upload your bouts or your opponents'. Stored on <b style="color:var(--text)">this device</b>, plays offline. Best for short clips. 📹</div>`;
+    : `<div class="empty">No footage yet.<br/><br/>Upload your bouts or your opponents'. Stored on <b style="color:var(--text)">this device</b>, plays offline. Best for short clips.</div>`;
   return `
     <div class="card">
-      <div class="eyebrow">📹 Upload footage</div>
+      <div class="eyebrow">Upload footage</div>
       <p class="note" style="margin-top:0">Your videos or your opponents'. Saved on this device — keep clips short.</p>
       <input type="file" id="footFile" accept="video/*" style="display:none"/>
       <button class="btn sm" id="footPick" style="margin-top:10px">Choose a video</button>
@@ -777,7 +788,7 @@ function wireFootage(){
   const file=document.getElementById('footFile');
   document.getElementById('footPick').onclick=()=>file.click();
   file.onchange=async()=>{ const f=file.files[0]; if(!f) return;
-    try{ const id=uid(); await idbPut(id,f); state.uploads.push({id, name:f.name, label:f.name.replace(/\.[^.]+$/,''), tag:'Mine', size:f.size, ts:Date.now()}); save(); renderFilm(); toast('Footage saved 📹'); }
+    try{ const id=uid(); await idbPut(id,f); state.uploads.push({id, name:f.name, label:f.name.replace(/\.[^.]+$/,''), tag:'Mine', size:f.size, ts:Date.now()}); save(); renderFilm(); toast('Footage saved'); }
     catch(err){ toast('Could not save — device storage may be full'); }
   };
   document.querySelectorAll('[data-playfoot]').forEach(el=>el.onclick=()=>playFoot(el.dataset.playfoot));
@@ -801,32 +812,32 @@ function renderPlaybook(){
   document.getElementById('view-playbook').innerHTML=`
     ${viewHero('hero1.png','center 25%','The Game','Playbook')}
     <div class="card hero">
-      <div class="eyebrow">🗺️ The one question</div>
+      <div class="eyebrow">The one question</div>
       <div class="focus-title" style="font-size:21px">Who commits — and when?</div>
       <p style="color:var(--muted);font-size:14px;margin:10px 0 0;line-height:1.45">Make <i>them</i> commit wrong (parry-riposte / pull distance), or commit first with timing they can't answer (attack / attack on prep).</p>
     </div>
 
-    <h2 class="section">✅ My arsenal</h2>
+    <h2 class="section">My arsenal</h2>
     <div class="card"><ul class="arslist">${ars}</ul></div>
 
-    <h2 class="section">🧰 Your toolbox — what you can play</h2>
+    <h2 class="section">Your toolbox — what you can play</h2>
     <div class="card">${tbox}<p class="note">Know every tool — then the read below tells you which to grab.</p></div>
 
-    <h2 class="section">🎼 The 3 dials</h2>
+    <h2 class="section">The 3 dials</h2>
     <div class="card"><div class="dials">${dials}</div>
       <p class="note">Change ONE dial, hold the others → a new song. Amateurs only turn speed.</p></div>
 
-    <h2 class="section">🎶 Song menu</h2>
+    <h2 class="section">Song menu</h2>
     <div class="card" style="overflow-x:auto"><table><tr><th>Song</th><th>How</th><th>Forces</th></tr>${songRows}</table></div>
 
-    <h2 class="section">🥷 Steal from both</h2>
+    <h2 class="section">Steal from both</h2>
     <div class="two">
-      <div class="style"><h4>🇰🇷 Korea</h4><ul><li>Relentless pressure</li><li>Violent gear-changes</li><li>Takes the attack</li><li><b style="color:var(--text)">Steal:</b> the explosive march</li></ul></div>
-      <div class="style"><h4>🇫🇷 France</h4><ul><li>Distance & patience</li><li>The pull & counter</li><li>Draws your attack</li><li><b style="color:var(--text)">Steal:</b> the bait</li></ul></div>
+      <div class="style"><h4>Korea</h4><ul><li>Relentless pressure</li><li>Violent gear-changes</li><li>Takes the attack</li><li><b style="color:var(--text)">Steal:</b> the explosive march</li></ul></div>
+      <div class="style"><h4>France</h4><ul><li>Distance & patience</li><li>The pull & counter</li><li>Draws your attack</li><li><b style="color:var(--text)">Steal:</b> the bait</li></ul></div>
     </div>
     <p class="note" style="padding:0 4px">You're a Korean-style finisher (7/10). Your untapped points are France's game — <b style="color:var(--text)">borrow the bait.</b></p>
 
-    <h2 class="section">👁️ Read, then play</h2>
+    <h2 class="section">Read, then play</h2>
     <div class="card" style="overflow-x:auto"><table><tr><th>If they…</th><th>They're a…</th><th>Play…</th></tr>${readRows}</table></div>
     <p class="note" style="padding:0 4px 10px">First 3 touches = scouting. Name the type, then pick the song.</p>
   `;
@@ -837,7 +848,7 @@ function exportData(){
   const blob=new Blob([JSON.stringify({sessions:state.sessions, plan:state.plan, films:state.films, clips:state.clips, uploads:state.uploads, exported:new Date().toISOString()},null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='piste-backup-'+todayKey()+'.json'; a.click();
-  toast('Backup downloaded 💾');
+  toast('Backup downloaded');
 }
 function importData(e){
   const f=e.target.files[0]; if(!f) return;
@@ -849,7 +860,7 @@ function importData(e){
       if(Array.isArray(d.films)) state.films=d.films;
       if(Array.isArray(d.clips)) state.clips=d.clips;
       if(Array.isArray(d.uploads)) state.uploads=d.uploads;
-      save(); updateStreak(); renderProgress(); toast('Data imported ✅');
+      save(); updateStreak(); renderProgress(); toast('Data imported');
     }catch(err){ toast('Could not read that file'); } };
   r.readAsText(f);
 }
