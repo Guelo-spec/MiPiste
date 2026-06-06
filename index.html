@@ -168,7 +168,7 @@
 }
 html,body{ background:#0a0f1e; }
 body::before{ content:""; position:fixed; inset:0; z-index:-2;
-  background:url('hero1.png') center 12% / cover no-repeat; }
+  background-image:var(--hero,url('hero1.png')); background-size:cover; background-position:center 12%; background-repeat:no-repeat; }
 body::after{ content:""; position:fixed; inset:0; z-index:-1;
   background:linear-gradient(180deg, rgba(8,11,24,.20) 0%, rgba(9,13,26,.45) 42%, rgba(7,10,20,.84) 84%, #070a14 100%); }
 .app{ background:transparent; }
@@ -191,7 +191,8 @@ nav{ background:rgba(10,14,28,.62) !important; -webkit-backdrop-filter:blur(18px
 .chip.sel{ box-shadow:0 4px 14px rgba(47,140,255,.4); }
 .thumb .play{ background:rgba(47,140,255,.92) !important; }
 /* greeting hero */
-.herohero{ position:relative; min-height:340px; margin:-18px -16px 8px; padding:18px 18px 20px; display:flex; align-items:flex-end; background:#0a0f1e url('hero1.png') center 34% / cover no-repeat; }
+.herohero{ position:relative; min-height:340px; margin:-18px -16px 8px; padding:18px 18px 20px; display:flex; align-items:flex-end; background-color:#0a0f1e; background-image:var(--hero,url('hero1.png')); background-size:cover; background-position:center 34%; background-repeat:no-repeat; }
+.heroedit{ position:absolute; top:16px; right:16px; z-index:2; width:38px; height:38px; border-radius:50%; border:1px solid rgba(255,255,255,.25); background:rgba(10,14,28,.5); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); color:#fff; font-size:15px; cursor:pointer; }
 .herohero::after{ content:""; position:absolute; inset:0; z-index:0; background:linear-gradient(180deg, rgba(8,11,24,.05) 0%, rgba(8,11,24,.12) 40%, rgba(10,14,28,.80) 86%, #0a0f1e 100%); }
 .greet{ position:relative; z-index:1; padding:0; text-shadow:0 2px 14px rgba(0,0,0,.6); }
 .greet .hi{ font-size:30px; font-weight:850; line-height:1.06; letter-spacing:.3px; }
@@ -369,7 +370,7 @@ function renderTonight(){
   const opts=SYSTEMS.map(s=>`<option value="${s.key}" ${s.key===state.plan.system?'selected':''}>${s.icon} ${s.name}</option>`).join('');
   const cues=SYSTEMS.filter(s=>s.key!=='middle').map(s=>`<div class="cuechip"><div class="ico">${s.icon}</div><div class="nm">${s.name}</div><div class="cc">${s.cue}</div></div>`).join('');
   document.getElementById('view-tonight').innerHTML = `
-    <div class="herohero"><div class="greet"><div class="hi">Hi Guel,</div><div class="welcome">Welcome back 🤺</div></div></div>
+    <div class="herohero"><button class="heroedit" id="heroEditBtn" title="Change hero image">✎</button><input type="file" id="heroFile" accept="image/*" style="display:none"/><div class="greet"><div class="hi">Hi Guel,</div><div class="welcome">Welcome back 🤺</div></div></div>
     <div class="card hero">
       <div class="eyebrow">🎯 Tonight's plan</div>
       <div class="focus-title">${sys.icon} ${sys.name}</div>
@@ -408,6 +409,8 @@ function renderTonight(){
     save(); renderTonight(); toast('Plan loaded. Go to work. 🤺');
   };
   document.getElementById('goLog').onclick=()=>switchTab('log');
+  const heroBtn=document.getElementById('heroEditBtn'), heroFile=document.getElementById('heroFile');
+  if(heroBtn){ heroBtn.onclick=()=>heroFile.click(); heroFile.onchange=async()=>{ const f=heroFile.files[0]; if(!f) return; try{ await idbPut('hero_img', f); await applyHero(); toast('Hero image set 🤺'); }catch(e){ toast('Could not set that image'); } }; }
 }
 
 let form = freshForm();
@@ -819,8 +822,10 @@ function switchTab(name){
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
 
+/* custom hero image (user-set, stored on device via IndexedDB) */
+async function applyHero(){ try{ const b=await idbGet('hero_img'); if(b){ const u=URL.createObjectURL(b); document.documentElement.style.setProperty('--hero', 'url("'+u+'")'); } }catch(e){} }
 /* boot */
-updateStreak(); renderTonight();
+updateStreak(); renderTonight(); applyHero();
 
 /* PWA: offline + installable */
 if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
