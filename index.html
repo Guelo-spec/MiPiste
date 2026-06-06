@@ -203,6 +203,14 @@ h2.section, .eyebrow{ text-shadow:0 1px 8px rgba(0,0,0,.45); }
 .vhcap{ position:relative; z-index:1; padding:14px 18px; }
 .vhk{ font-size:11px; letter-spacing:2px; font-weight:800; color:#9cc2ff; text-transform:uppercase; text-shadow:0 1px 8px rgba(0,0,0,.6); }
 .vht{ font-size:22px; font-weight:850; text-shadow:0 2px 10px rgba(0,0,0,.6); line-height:1.1; }
+.statrow{ display:flex; gap:8px; margin-top:12px; }
+.statcirc{ flex:1; text-align:center; }
+.sc-ic{ width:48px; height:48px; margin:0 auto; border-radius:50%; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; font-size:21px; }
+.sc-v{ font-weight:850; font-size:15px; margin-top:6px; }
+.sc-l{ font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:1px; }
+.gauge{ width:100%; max-width:280px; display:block; margin:6px auto 0; }
+.gbig{ fill:#fff; font-size:30px; font-weight:850; text-anchor:middle; }
+.gsub{ fill:#9aa6bd; font-size:11px; font-weight:700; text-anchor:middle; letter-spacing:1px; }
 </style>
 </head>
 <body>
@@ -373,12 +381,33 @@ const moodColor = v => v>=4?'var(--good)': v>=3?'var(--warn)':'var(--bad)';
 function viewHero(img, pos, kicker, title){
   return `<div class="vhero" style="background-image:url('${img}');background-position:${pos||'center'}"><div class="vhsh"></div><div class="vhcap"><div class="vhk">${kicker}</div><div class="vht">${title}</div></div></div>`;
 }
+function statCirc(ic,v,l){ return `<div class="statcirc"><div class="sc-ic">${ic}</div><div class="sc-v">${v}</div><div class="sc-l">${l}</div></div>`; }
+function weekCount(){ const c=new Date(); c.setDate(c.getDate()-6); const ck=ymd(c); return state.sessions.filter(s=>s.date>=ck).length; }
+function gauge(pct,big,sub){
+  pct=Math.max(0,Math.min(100,pct)); const cx=100,cy=104,rin=66,rout=86,ticks=44; let t='';
+  for(let i=0;i<ticks;i++){ const frac=i/(ticks-1); const a=Math.PI*(1+frac); const cos=Math.cos(a),sin=Math.sin(a); const on=frac<=pct/100+0.0001;
+    t+=`<line x1="${(cx+rin*cos).toFixed(1)}" y1="${(cy+rin*sin).toFixed(1)}" x2="${(cx+rout*cos).toFixed(1)}" y2="${(cy+rout*sin).toFixed(1)}" stroke="${on?'var(--accent)':'rgba(255,255,255,.16)'}" stroke-width="3" stroke-linecap="round"/>`; }
+  const ad=Math.PI*(1+pct/100), rm=(rin+rout)/2;
+  const dot=`<circle cx="${(cx+rm*Math.cos(ad)).toFixed(1)}" cy="${(cy+rm*Math.sin(ad)).toFixed(1)}" r="4.5" fill="#36e08a"/>`;
+  return `<svg viewBox="0 0 200 116" class="gauge">${t}${dot}<text x="100" y="84" class="gbig">${big}</text><text x="100" y="103" class="gsub">${sub}</text></svg>`;
+}
 function renderTonight(){
   const sys=sysByKey(state.plan.system);
   const opts=SYSTEMS.map(s=>`<option value="${s.key}" ${s.key===state.plan.system?'selected':''}>${s.icon} ${s.name}</option>`).join('');
   const cues=SYSTEMS.filter(s=>s.key!=='middle').map(s=>`<div class="cuechip"><div class="ico">${s.icon}</div><div class="nm">${s.name}</div><div class="cc">${s.cue}</div></div>`).join('');
   document.getElementById('view-tonight').innerHTML = `
     <div class="herohero"><button class="heroedit" id="heroEditBtn" title="Change hero image">✎</button><input type="file" id="heroFile" accept="image/*" style="display:none"/><div class="greet"><div class="hi">Hi Guel,</div><div class="welcome">Welcome back 🤺</div></div></div>
+    <h2 class="section">My Sabre</h2>
+    <div class="card">
+      <div class="eyebrow">📊 This week</div>
+      <div class="statrow">
+        ${statCirc('🔥', currentStreak(), 'streak')}
+        ${statCirc('🤺', state.sessions.length, 'sessions')}
+        ${statCirc('🎵', (avg(recent(7).map(x=>x.songs))||0).toFixed(1), 'songs')}
+        ${statCirc('😊', avg(recent(7).map(x=>x.mood)) ? avg(recent(7).map(x=>x.mood)).toFixed(1) : '—', 'mood')}
+      </div>
+    </div>
+    <h2 class="section">Tonight</h2>
     <div class="card hero">
       <div class="eyebrow">🎯 Tonight's plan</div>
       <div class="focus-title">${sys.icon} ${sys.name}</div>
@@ -509,6 +538,10 @@ function renderProgress(){
   const songs=recent(14).map(x=>x.songs);
   document.getElementById('view-progress').innerHTML=`
     ${viewHero('ph2.jpg','center 30%','Your Climb','Progress')}
+    <div class="card" style="text-align:center">
+      <div class="eyebrow" style="justify-content:center">🎯 This week</div>
+      ${gauge(Math.min(100,Math.round(weekCount()/4*100)), Math.min(100,Math.round(weekCount()/4*100))+'%', weekCount()+' / 4 sessions')}
+    </div>
     <div class="stats">
       <div class="stat"><div class="v gold">🔥 ${currentStreak()}</div><div class="l">Current streak</div></div>
       <div class="stat"><div class="v">${s.length}</div><div class="l">Total sessions</div></div>
